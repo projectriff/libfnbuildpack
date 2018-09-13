@@ -1,0 +1,17 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: cfje/riff-buildpack
+    tag: latest
+
+inputs:
+- name: riff-buildpack
+
+caches:
+- path: go-build
+
+run:
+  path: riff-buildpack/ci/unit-test.sh
