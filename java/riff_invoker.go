@@ -34,7 +34,7 @@ const (
 	RiffInvokerDependency = "riff-invoker-java"
 )
 
-// RiffInvoker represents the Java invoker contributed by the buildpack
+// RiffInvoker represents the Java invoker contributed by the buildpack.
 type RiffInvoker struct {
 	application libbuildpack.Application
 	handler     string
