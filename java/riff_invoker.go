@@ -44,23 +44,22 @@ type RiffInvoker struct {
 
 // Contribute makes the contribution to the launch layer
 func (r RiffInvoker) Contribute() error {
-	return r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
-		destination := filepath.Join(layer.Root, filepath.Base(artifact))
-
+	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+		destination := filepath.Join(layer.Root, layer.ArtifactName())
 		layer.Logger.SubsequentLine("Copying to %s", destination)
-		if err := libjavabuildpack.CopyFile(artifact, destination); err != nil {
-			return err
-		}
+		return libjavabuildpack.CopyFile(artifact, destination)
+	})
+	if err != nil {
+		return err
+	}
 
-		command := r.command(destination)
+	command := r.command(filepath.Join(r.layer.Root, r.layer.ArtifactName()))
 
-		// TODO: This needs to happen all the time (not just conditionally)
-		return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
-			Processes: libbuildpack.Processes{
-				libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
-				libbuildpack.Process{Type: "function", Command: command},
-			},
-		})
+	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
+		Processes: libbuildpack.Processes{
+			libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
+			libbuildpack.Process{Type: "function", Command: command},
+		},
 	})
 }
 
