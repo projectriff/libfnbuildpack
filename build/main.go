@@ -38,7 +38,7 @@ func main() {
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
 			build.Logger.Info(err.Error())
-			build.Failure(102)
+			build.Failure(103)
 			return
 		}
 	}
