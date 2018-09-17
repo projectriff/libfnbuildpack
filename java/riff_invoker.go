@@ -89,7 +89,7 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 	}
 }
 
-// NewRiffInvoker creates a new JDK instance. OK is true if build plan contains "riff-invoker-java" dependency,
+// NewRiffInvoker creates a new RiffInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,
 // otherwise false.
 func NewRiffInvoker(build libjavabuildpack.Build) (RiffInvoker, bool, error) {
 	bp, ok := build.BuildPlan[RiffInvokerDependency]
