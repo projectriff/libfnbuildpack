@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cloudfoundry/jvm-application-buildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
 	"github.com/projectriff/riff-buildpack"
 	"github.com/projectriff/riff-buildpack/java"
@@ -44,8 +45,7 @@ func main() {
 		return
 	}
 
-	// TODO use constants for jvm-application
-	if _, ok := detect.BuildPlan["jvm-application"]; ok {
+	if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
 		detect.Logger.Debug("Riff Java application")
 		detect.Pass(java.BuildPlanContribution(metadata))
 		return

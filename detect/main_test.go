@@ -17,10 +17,12 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/cloudfoundry/jvm-application-buildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
 	"github.com/cloudfoundry/libjavabuildpack/test"
 	"github.com/sclevine/spec"
@@ -50,7 +52,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 		f := test.NewEnvironmentFactory(t)
 		defer f.Restore()
 
-		f.Console.In(t, "[jvm-application]")
+		f.Console.In(t, fmt.Sprintf("[%s]", jvm_application_buildpack.JVMApplication))
 
 		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
 			t.Fatal(err)
