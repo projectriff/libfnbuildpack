@@ -54,6 +54,7 @@ func (r RiffInvoker) Contribute() error {
 
 		command := r.command(destination)
 
+		// TODO: This needs to happen all the time (not just conditionally)
 		return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 			Processes: libbuildpack.Processes{
 				libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 [buildpack]
-id = "io.projectriff"
+id = "io.projectriff.riff"
 name = "Riff Buildpack"
 version = "1.0.0-BUILD-SNAPSHOT"
 

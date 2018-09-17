@@ -31,6 +31,8 @@ func main() {
 		os.Exit(101)
 	}
 
+	build.Logger.FirstLine(build.Logger.PrettyVersion(build.Buildpack))
+
 	if invoker, ok, err := java.NewRiffInvoker(build); err != nil {
 		build.Logger.Info(err.Error())
 		build.Failure(102)
