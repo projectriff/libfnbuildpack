@@ -57,7 +57,7 @@ func (r RiffInvoker) Contribute() error {
 		return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 			Processes: libbuildpack.Processes{
 				libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
-				libbuildpack.Process{Type: "fun", Command: command},
+				libbuildpack.Process{Type: "function", Command: command},
 			},
 		})
 	})
