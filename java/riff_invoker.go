@@ -17,7 +17,12 @@
 package java
 
 import (
+	"fmt"
+	"path/filepath"
+
 	"github.com/buildpack/libbuildpack"
+	"github.com/cloudfoundry/libjavabuildpack"
+	"github.com/cloudfoundry/openjdk-buildpack"
 	"github.com/projectriff/riff-buildpack"
 )
 
@@ -31,14 +36,49 @@ const (
 
 // RiffInvoker represents the Java invoker contributed by the buildpack
 type RiffInvoker struct {
+	application libbuildpack.Application
+	handler     string
+	launch      libjavabuildpack.Launch
+	layer       libjavabuildpack.DependencyLaunchLayer
+}
+
+// Contribute makes the contribution to the launch layer
+func (r RiffInvoker) Contribute() error {
+	return r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+		destination := filepath.Join(layer.Root, filepath.Base(artifact))
+
+		layer.Logger.SubsequentLine("Copying to %s", destination)
+		if err := libjavabuildpack.CopyFile(artifact, destination); err != nil {
+			return err
+		}
+
+		command := r.command(destination)
+
+		return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
+			Processes: libbuildpack.Processes{
+				libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
+				libbuildpack.Process{Type: "riff", Command: command},
+			},
+		})
+	})
+}
+
+// String makes RiffInvoker satisfy the Stringer interface.
+func (r RiffInvoker) String() string {
+	return fmt.Sprintf("RiffInvoker{ application: %s, handler: %s, launch: %s, layer :%s }",
+		r.application, r.handler, r.launch, r.layer)
+}
+
+func (r RiffInvoker) command(destination string) (string) {
+	return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri=file://%s?handler=%s --riff.function.invoker.protocol=http",
+		destination, r.application.Root, r.handler)
 }
 
 // BuildPlanContribution returns the BuildPlan with requirements for the invoker
-func (r RiffInvoker) BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
-	// TODO use constants for openjdk-jre and launch
+func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
 	return libbuildpack.BuildPlan{
-		"openjdk-jre": libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{"launch": true},
+		openjdk_buildpack.JREDependency: libbuildpack.BuildPlanDependency{
+			Metadata: libbuildpack.BuildPlanDependencyMetadata{openjdk_buildpack.LaunchContribution: true},
 			Version:  "1.*",
 		},
 		RiffInvokerDependency: libbuildpack.BuildPlanDependency{
@@ -47,4 +87,33 @@ func (r RiffInvoker) BuildPlanContribution(metadata riff_buildpack.Metadata) lib
 			},
 		},
 	}
+}
+
+func NewRiffInvoker(build libjavabuildpack.Build) (RiffInvoker, bool, error) {
+	bp, ok := build.BuildPlan[RiffInvokerDependency]
+	if !ok {
+		return RiffInvoker{}, false, nil
+	}
+
+	deps, err := build.Buildpack.Dependencies()
+	if err != nil {
+		return RiffInvoker{}, false, err
+	}
+
+	dep, err := deps.Best(RiffInvokerDependency, bp.Version, build.Stack)
+	if err != nil {
+		return RiffInvoker{}, false, err
+	}
+
+	handler, ok := bp.Metadata[Handler].(string)
+	if !ok {
+		return RiffInvoker{}, false, fmt.Errorf("handler metadata of incorrect type: %v", bp.Metadata[Handler])
+	}
+
+	return RiffInvoker{
+		build.Application,
+		handler,
+		build.Launch,
+		build.Launch.DependencyLayer(dep),
+	}, true, nil
 }

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/cloudfoundry/libjavabuildpack"
+	"github.com/cloudfoundry/libjavabuildpack/test"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
@@ -33,89 +34,49 @@ func TestDetect(t *testing.T) {
 func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 	it("fails without metadata", func() {
-		root := libjavabuildpack.ScratchDir(t, "detect")
-		defer libjavabuildpack.ReplaceWorkingDirectory(t, root)()
+		f := test.NewEnvironmentFactory(t)
+		defer f.Restore()
 
-		defer libjavabuildpack.ReplaceEnv(t, "PACK_STACK_ID", "test-stack")()
-
-		c, d := libjavabuildpack.ReplaceConsole(t)
-		defer d()
-		c.In(t, "")
-
-		err := libjavabuildpack.WriteToFile(strings.NewReader(""), filepath.Join(root, "buildpack.toml"), 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		defer libjavabuildpack.ReplaceArgs(t, filepath.Join(root, "bin", "test"))()
-
-		actual, d := libjavabuildpack.CaptureExitStatus(t)
-		defer d()
+		f.Console.In(t, "")
 
 		main()
 
-		if *actual != 100 {
-			t.Errorf("os.Exit = %d, expected 100", *actual)
+		if *f.ExitStatus != 100 {
+			t.Errorf("os.Exit = %d, expected 100", *f.ExitStatus)
 		}
 	})
 
 	it("passes with metadata and jvm-application", func() {
-		root := libjavabuildpack.ScratchDir(t, "detect")
-		defer libjavabuildpack.ReplaceWorkingDirectory(t, root)()
+		f := test.NewEnvironmentFactory(t)
+		defer f.Restore()
 
-		defer libjavabuildpack.ReplaceEnv(t, "PACK_STACK_ID", "test-stack")()
+		f.Console.In(t, "[jvm-application]")
 
-		c, d := libjavabuildpack.ReplaceConsole(t)
-		defer d()
-		c.In(t, `[jvm-application]`)
-
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(""), filepath.Join(root, "buildpack.toml"), 0644); err != nil {
+		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
 			t.Fatal(err)
 		}
-
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(root, "riff.toml"), 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		defer libjavabuildpack.ReplaceArgs(t, filepath.Join(root, "bin", "test"))()
-
-		actual, d := libjavabuildpack.CaptureExitStatus(t)
-		defer d()
 
 		main()
 
-		if *actual != 0 {
-			t.Errorf("os.Exit = %d, expected 0", *actual)
+		if *f.ExitStatus != 0 {
+			t.Errorf("os.Exit = %d, expected 0", *f.ExitStatus)
 		}
 	})
 
 	it("errors with metadata but no application-type", func() {
-		root := libjavabuildpack.ScratchDir(t, "detect")
-		defer libjavabuildpack.ReplaceWorkingDirectory(t, root)()
+		f := test.NewEnvironmentFactory(t)
+		defer f.Restore()
 
-		defer libjavabuildpack.ReplaceEnv(t, "PACK_STACK_ID", "test-stack")()
+		f.Console.In(t, "")
 
-		c, d := libjavabuildpack.ReplaceConsole(t)
-		defer d()
-		c.In(t, "")
-
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(""), filepath.Join(root, "buildpack.toml"), 0644); err != nil {
+		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
 			t.Fatal(err)
 		}
-
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(root, "riff.toml"), 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		defer libjavabuildpack.ReplaceArgs(t, filepath.Join(root, "bin", "test"))()
-
-		actual, d := libjavabuildpack.CaptureExitStatus(t)
-		defer d()
 
 		main()
 
-		if *actual != 103 {
-			t.Errorf("os.Exit = %d, expected 103", *actual)
+		if *f.ExitStatus != 103 {
+			t.Errorf("os.Exit = %d, expected 103", *f.ExitStatus)
 		}
 	})
 }

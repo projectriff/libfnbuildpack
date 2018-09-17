@@ -21,37 +21,27 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/libjavabuildpack"
-	"github.com/projectriff/riff-buildpack"
 	"github.com/projectriff/riff-buildpack/java"
 )
 
 func main() {
-	detect, err := libjavabuildpack.DefaultDetect()
+	build, err := libjavabuildpack.DefaultBuild()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err.Error())
 		os.Exit(101)
 	}
 
-	metadata, ok, err := riff_buildpack.NewMetadata(detect.Application, detect.Logger)
-	if err != nil {
-		detect.Logger.Info("Unable to read riff metadata: %s", err.Error())
-		detect.Error(102)
+	if invoker, ok, err := java.NewRiffInvoker(build); err != nil {
+		build.Logger.Info(err.Error())
+		build.Failure(102)
 		return
+	} else if ok {
+		if err = invoker.Contribute(); err != nil {
+			build.Logger.Info(err.Error())
+			build.Failure(102)
+			return
+		}
 	}
 
-	if !ok {
-		detect.Fail()
-		return
-	}
-
-	// TODO use constants for jvm-application
-	if _, ok := detect.BuildPlan["jvm-application"]; ok {
-		detect.Logger.Debug("Riff Java application")
-		detect.Pass(java.BuildPlanContribution(metadata))
-		return
-	}
-
-	detect.Logger.Info("Detected Riff application but unable to determine application type.")
-	detect.Error(103)
-	return
+	build.Success()
 }

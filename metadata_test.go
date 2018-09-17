@@ -22,8 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/buildpack/libbuildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
+	"github.com/cloudfoundry/libjavabuildpack/test"
 	"github.com/projectriff/riff-buildpack"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -35,13 +35,10 @@ func TestMetadata(t *testing.T) {
 
 func testMetadata(t *testing.T, when spec.G, it spec.S) {
 
-	logger := libbuildpack.Logger{}
-
 	it("returns false if riff.toml does not exist", func() {
-		root := libjavabuildpack.ScratchDir(t, "metadata")
-		application := libbuildpack.Application{Root: root}
+		f := test.NewBuildFactory(t)
 
-		_, ok, err := riff_buildpack.NewMetadata(application, logger)
+		_, ok, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,11 +49,12 @@ func testMetadata(t *testing.T, when spec.G, it spec.S) {
 	})
 
 	it("returns metadata if riff.toml does exist", func() {
-		root := libjavabuildpack.ScratchDir(t, "metadata")
-		application := libbuildpack.Application{Root: root}
-		libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(root, "riff.toml"), 0644)
+		f := test.NewBuildFactory(t)
 
-		actual, ok, err := riff_buildpack.NewMetadata(application, logger)
+		metadata := filepath.Join(f.Build.Application.Root, "riff.toml")
+		libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), metadata, 0644)
+
+		actual, ok, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
 		if err != nil {
 			t.Fatal(err)
 		}

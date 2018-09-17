@@ -36,7 +36,7 @@ func (m Metadata) String() string {
 
 // NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml.  If that file does not exist,
 // the second return value is false.
-func NewMetadata(application libbuildpack.Application, logger libbuildpack.Logger) (Metadata, bool, error) {
+func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.Logger) (Metadata, bool, error) {
 	f := filepath.Join(application.Root, "riff.toml")
 
 	exists, err := libjavabuildpack.FileExists(f)
