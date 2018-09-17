@@ -104,12 +104,12 @@ func testRiffInvoker(t *testing.T, when spec.G, it spec.S) {
 			Metadata: libbuildpack.BuildPlanDependencyMetadata{java.Handler: "test-handler"},
 		})
 
-		j, _, err := java.NewRiffInvoker(f.Build)
+		r, _, err := java.NewRiffInvoker(f.Build)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if err := j.Contribute(); err != nil {
+		if err := r.Contribute(); err != nil {
 			t.Fatal(err)
 		}
 
