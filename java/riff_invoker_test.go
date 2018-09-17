@@ -128,7 +128,7 @@ func testRiffInvoker(t *testing.T, when spec.G, it spec.S) {
 		expected := libbuildpack.LaunchMetadata{
 			Processes: libbuildpack.Processes{
 				libbuildpack.Process{Type: "web", Command: command},
-				libbuildpack.Process{Type: "riff", Command: command},
+				libbuildpack.Process{Type: "fun", Command: command},
 			},
 		}
 
