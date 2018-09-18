@@ -69,7 +69,7 @@ func (r RiffInvoker) String() string {
 		r.application, r.handler, r.launch, r.layer)
 }
 
-func (r RiffInvoker) command(destination string) (string) {
+func (r RiffInvoker) command(destination string) string {
 	return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri=file://%s?handler=%s --riff.function.invoker.protocol=http",
 		destination, r.application.Root, r.handler)
 }
