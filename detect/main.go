@@ -46,12 +46,12 @@ func main() {
 	}
 
 	if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
-		detect.Logger.Debug("Riff Java application")
+		detect.Logger.Debug("riff Java application")
 		detect.Pass(java.BuildPlanContribution(metadata))
 		return
 	}
 
-	detect.Logger.Info("Detected Riff application but unable to determine application type.")
+	detect.Logger.Info("Detected riff application but unable to determine application type.")
 	detect.Error(103)
 	return
 }

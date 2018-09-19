@@ -1,8 +1,8 @@
 # `riff-buildpack`
-The Riff Buildpack is a Cloud Native Buildpack V3 that provides Riff Invokers to functions.
+The riff Buildpack is a Cloud Native Buildpack V3 that provides riff Invokers to functions.
 
 ## Detection
-Detection passes if a `$APPLICATION_ROOT/riff.toml` exists and the build plan already contains a `jvm-application` key.  If detection passes, the buildpack will contribute an `openjdk-jre` key with `launch` metadata to instruct the `openjdk-buildpack` to provide a JRE.  It will also add a `riff-invoker-java-` key and `handler` metadata extracted from the Riff metadata.
+Detection passes if a `$APPLICATION_ROOT/riff.toml` exists and the build plan already contains a `jvm-application` key.  If detection passes, the buildpack will contribute an `openjdk-jre` key with `launch` metadata to instruct the `openjdk-buildpack` to provide a JRE.  It will also add a `riff-invoker-java-` key and `handler` metadata extracted from the riff metadata.
 
 ## Build
 ```toml
@@ -12,7 +12,7 @@ Detection passes if a `$APPLICATION_ROOT/riff.toml` exists and the build plan al
   handler = "FQN of handler"
 ```
 
-* Contributes Riff Java Invoker to a launch layer
+* Contributes riff Java Invoker to a launch layer
 * Contributes `web` process
 * Contributes `riff` process
 

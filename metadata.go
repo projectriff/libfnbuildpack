@@ -54,6 +54,6 @@ func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.L
 		return Metadata{}, false, err
 	}
 
-	logger.Debug("Riff metadata: %s", metadata)
+	logger.Debug("riff metadata: %s", metadata)
 	return metadata, true, nil
 }

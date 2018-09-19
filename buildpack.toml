@@ -14,7 +14,7 @@
 
 [buildpack]
 id = "io.projectriff.riff"
-name = "Riff Buildpack"
+name = "riff Buildpack"
 version = "1.0.0-BUILD-SNAPSHOT"
 
 [[stacks]]
@@ -22,7 +22,7 @@ id = "io.buildpacks.stacks.bionic"
 
 [[metadata.dependencies]]
 id      = "riff-invoker-java"
-name    = "Riff Java Invoker"
+name    = "riff Java Invoker"
 version = "0.1.0"
 uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.0/java-function-invoker-0.1.0-exec.jar"
 sha256  = "03e6fd96711c4a065acaea56e15ce7dcfb2e92d6fd19e3c512c73df9d845db03"
