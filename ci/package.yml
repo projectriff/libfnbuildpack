@@ -1,0 +1,20 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: cfje/riff-buildpack
+    tag: latest
+
+inputs:
+- name: riff-buildpack
+
+outputs:
+- name: artifactory
+
+caches:
+- path: go-build
+
+run:
+  path: riff-buildpack/ci/package.sh

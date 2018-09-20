@@ -27,3 +27,14 @@ version = "0.1.1"
 uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.1/java-function-invoker-0.1.1-exec.jar"
 sha256  = "f98ac198ab0dde66a84d6c264c84a59564c35c6717710eaf6177bbc9119bd0cb"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
+
+[metadata]
+  pre_package = "ci/build.sh"
+  include_files = [
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "bin/build",
+    "bin/detect",
+    "buildpack.toml",
+  ]
