@@ -122,7 +122,7 @@ func testRiffInvoker(t *testing.T, when spec.G, it spec.S) {
 			t.Fatal(err)
 		}
 
-		command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri=file://%s?handler=test-handler --riff.function.invoker.protocol=http",
+		command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
 			filepath.Join(layerRoot, "stub-invoker.jar"), f.Build.Application.Root)
 
 		expected := libbuildpack.LaunchMetadata{
