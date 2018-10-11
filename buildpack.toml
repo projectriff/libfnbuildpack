@@ -26,6 +26,7 @@ name    = "riff Java Invoker"
 version = "0.1.2"
 uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.2/java-function-invoker-0.1.2-exec.jar"
 sha256  = "dd0e4ef2c140d29900e4e9b549f017d78b0fafaa1974c73f512fe25d0dca878e"
+license = "https://github.com/projectriff/java-function-invoker/blob/master/LICENSE"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
 [metadata]
