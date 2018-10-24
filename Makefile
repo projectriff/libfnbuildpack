@@ -1,8 +1,12 @@
-.PHONY: clean build
+.PHONY: clean build test all
 GO_SOURCES = $(shell find . -type f -name '*.go')
 
+all: test build
 
 build: scratch/io/projectriff/riff/io.projectriff.riff
+
+test:
+	go test -v ./...
 
 scratch/io/projectriff/riff/io.projectriff.riff: bin/package buildpack.toml
 	rm -fR $@ 							&& \

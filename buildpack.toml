@@ -26,12 +26,25 @@ name    = "riff Java Invoker"
 version = "0.1.2"
 uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.2/java-function-invoker-0.1.2-exec.jar"
 sha256  = "dd0e4ef2c140d29900e4e9b549f017d78b0fafaa1974c73f512fe25d0dca878e"
-license = "https://github.com/projectriff/java-function-invoker/blob/master/LICENSE"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]
   type = "Apache-2.0"
   uri  = "https://github.com/projectriff/java-function-invoker/blob/master/LICENSE"
+
+[[metadata.dependencies]]
+id      = "riff-invoker-command"
+name    = "riff Command Invoker"
+version = "0.1.2"
+uri     = "https://github.com/ericbottard/command-function-invoker/releases/download/test/command-invoker"
+sha256  = "ba3fe78741a999f036d662805fb274015a023a22a9fa14835c4313cfa7b44723"
+stacks  = [ "io.buildpacks.stacks.bionic" ]
+
+  [[metadata.dependencies.licenses]]
+  type = "Apache-2.0"
+  uri  = "https://github.com/projectriff/command-function-invoker/blob/master/LICENSE"
+
+
 
 [metadata]
   pre_package = "ci/build.sh"

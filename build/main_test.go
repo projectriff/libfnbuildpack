@@ -30,7 +30,7 @@ func TestBuild(t *testing.T) {
 
 func testBuild(t *testing.T, when spec.G, it spec.S) {
 
-	it("always passes", func() {
+	it("fails if unsupported type", func() {
 		f := test.NewEnvironmentFactory(t)
 		defer f.Restore()
 
@@ -38,8 +38,8 @@ func testBuild(t *testing.T, when spec.G, it spec.S) {
 
 		main()
 
-		if *f.ExitStatus != 0 {
-			t.Errorf("os.Exit = %d, expected 0", *f.ExitStatus)
+		if *f.ExitStatus != 104 {
+			t.Errorf("os.Exit = %d, expected 104", *f.ExitStatus)
 		}
 	})
 }
