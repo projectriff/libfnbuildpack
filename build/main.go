@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/projectriff/riff-buildpack/command"
 	"os"
 
 	"github.com/cloudfoundry/libjavabuildpack"
@@ -43,7 +44,25 @@ func main() {
 			build.Failure(103)
 			return
 		}
+		build.Success()
+		return
 	}
 
-	build.Success()
+	if invoker, ok, err := command.NewCommandInvoker(build); err != nil {
+		build.Logger.Info(err.Error())
+		build.Failure(102)
+		return
+	} else if ok {
+		if err = invoker.Contribute(); err != nil {
+			build.Logger.Info(err.Error())
+			build.Failure(103)
+			return
+		}
+		build.Success()
+		return
+	}
+
+	build.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
+	build.Failure(104)
+
 }

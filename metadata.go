@@ -26,15 +26,22 @@ import (
 
 // Metadata represents the contents of the riff.toml file in an application root
 type Metadata struct {
+	// Artifact is the path to the main function artifact. This may be a java jar file, an executable file, etc
+	// May be autodetected or chosen by a collaborating buildpack
+	Artifact string `toml:"artifact"`
+
+	// Handler os a "finer grained" handler for the function within the artifact, if applicable.
+	// This may be a classname, a function name, etc. May be autodetected or chosen by a collaborating
+	// buildpack or function invoker.
 	Handler string `toml:"handler"`
 }
 
 // String makes Metadata satisfy the Stringer interface.
 func (m Metadata) String() string {
-	return fmt.Sprintf("Metadata{ Handler: %s }", m.Handler)
+	return fmt.Sprintf("Metadata{ Artifact: %s, Handler: %s }", m.Artifact, m.Handler)
 }
 
-// NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml.  If that file does not exist,
+// NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml. If that file does not exist,
 // the second return value is false.
 func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.Logger) (Metadata, bool, error) {
 	f := filepath.Join(application.Root, "riff.toml")

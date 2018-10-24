@@ -18,12 +18,12 @@ package main
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/cloudfoundry/jvm-application-buildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
 	"github.com/projectriff/riff-buildpack"
+	"github.com/projectriff/riff-buildpack/command"
 	"github.com/projectriff/riff-buildpack/java"
+	"os"
 )
 
 func main() {
@@ -49,6 +49,17 @@ func main() {
 		detect.Logger.Debug("riff Java application")
 		detect.Pass(java.BuildPlanContribution(metadata))
 		return
+	} else {
+		// Try command invoker as last resort
+		if ok, err := command.DetectCommand(detect, metadata) ; err != nil {
+			detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
+			detect.Error(104)
+			return
+		} else if ok {
+			detect.Logger.Debug("riff Command application")
+			detect.Pass(command.BuildPlanContribution(metadata))
+			return
+		}
 	}
 
 	detect.Logger.Info("Detected riff application but unable to determine application type.")

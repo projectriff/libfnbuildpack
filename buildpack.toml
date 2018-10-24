@@ -33,6 +33,21 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
   type = "Apache-2.0"
   uri  = "https://github.com/projectriff/java-function-invoker/blob/master/LICENSE"
 
+[[metadata.dependencies]]
+id      = "riff-invoker-command"
+name    = "riff Command Invoker"
+version = "0.1.2"
+uri     = "https://github.com/ericbottard/command-function-invoker/releases/download/test/command-invoker"
+sha256  = "ba3fe78741a999f036d662805fb274015a023a22a9fa14835c4313cfa7b44723"
+license = "https://github.com/projectriff/java-command-invoker/blob/master/LICENSE"
+stacks  = [ "io.buildpacks.stacks.bionic" ]
+
+  [[metadata.dependencies.licenses]]
+  type = "Apache-2.0"
+  uri  = "https://github.com/projectriff/java-command-invoker/blob/master/LICENSE"
+
+
+
 [metadata]
   pre_package = "ci/build.sh"
   include_files = [

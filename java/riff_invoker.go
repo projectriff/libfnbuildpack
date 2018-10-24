@@ -30,7 +30,7 @@ const (
 	// Handler is the key identifying the riff handler metadata in the build plan
 	Handler = "handler"
 
-	// RiffInvokerDependency is the key identifying the riff invoker in the buildpack plan.
+	// RiffInvokerDependency is the key identifying the riff java invoker in the buildpack plan.
 	RiffInvokerDependency = "riff-invoker-java"
 )
 
