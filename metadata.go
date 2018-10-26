@@ -30,7 +30,7 @@ type Metadata struct {
 	// May be autodetected or chosen by a collaborating buildpack
 	Artifact string `toml:"artifact"`
 
-	// Handler os a "finer grained" handler for the function within the artifact, if applicable.
+	// Handler is a "finer grained" handler for the function within the artifact, if applicable.
 	// This may be a classname, a function name, etc. May be autodetected or chosen by a collaborating
 	// buildpack or function invoker.
 	Handler string `toml:"handler"`
