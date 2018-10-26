@@ -26,7 +26,7 @@ metadata extracted from the riff metadata.
 ## Build Phase
 
 If a java build has been detected
-* Contributes riff Java Invoker to a launch layer, set as the main java entry point with `function.uri = <build>?handler=<handler` set
+* Contributes riff Java Invoker to a launch layer, set as the main java entry point with `function.uri = <build>?handler=<handler>` set
 
 If a command function has been selected
 * Contributes the riff Command Invoker to a launch layer, set as the main executable with `FUNCTION_URI = <artifact>`
