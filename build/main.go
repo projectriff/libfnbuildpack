@@ -64,5 +64,4 @@ func main() {
 
 	build.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
 	build.Failure(104)
-
 }
