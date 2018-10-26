@@ -29,7 +29,7 @@ func DetectCommand(detect libjavabuildpack.Detect, metadata riff_buildpack.Metad
 	path := filepath.Join(detect.Application.Root, metadata.Artifact)
 
 	ok, err := libjavabuildpack.FileExists(path)
-	if err != nil || !ok{
+	if err != nil || !ok {
 		return false, err
 	}
 	info, err := os.Stat(path)
