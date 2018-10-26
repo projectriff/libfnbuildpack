@@ -44,7 +44,7 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]
   type = "Apache-2.0"
-  uri  = "https://github.com/projectriff/java-command-invoker/blob/master/LICENSE"
+  uri  = "https://github.com/projectriff/command-function-invoker/blob/master/LICENSE"
 
 
 
