@@ -35,9 +35,9 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
 [[metadata.dependencies]]
 id      = "riff-invoker-command"
 name    = "riff Command Invoker"
-version = "0.1.2"
-uri     = "https://storage.googleapis.com/projectriff/command-function-invoker/latest"
-sha256  = "56ba00ee6ae22190fca6981b381a6c495dab4eda9777aba92ca87b3ffc17c7f2"
+version = "0.0.8+snapshot"
+uri     = "https://storage.googleapis.com/projectriff/command-function-invoker/command-function-inovker-linux-amd64-0.0.8-snapshot.tgz"
+sha256  = "94c15af822230c5e93b6a5a634b25d0d07d0384b99609df6c8e14484e9def465"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]

@@ -20,3 +20,4 @@ bin/package: go.mod $(GO_SOURCES)
 
 clean:
 	rm -fR scratch/
+	rm -fR cache/

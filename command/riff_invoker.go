@@ -22,7 +22,6 @@ import (
 	"github.com/buildpack/libbuildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
 	"github.com/projectriff/riff-buildpack"
-	"os"
 	"path/filepath"
 )
 
@@ -32,6 +31,9 @@ const (
 
 	// command is the key identifying the command executable in the build plan.
 	command = "command"
+
+	// functionInvokerExecutable is the name of the function invoker in the tgz dependency
+	functionInvokerExecutable = "command-function-invoker"
 )
 
 // RiffCommandInvoker represents the Command invoker contributed by the buildpack.
@@ -56,19 +58,14 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 // Contribute makes the contribution to the launch layer
 func (r RiffCommandInvoker) Contribute() error {
 	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
-		destination := filepath.Join(layer.Root, layer.ArtifactName())
-		layer.Logger.SubsequentLine("Copying to %s", destination)
-
-		if e := libjavabuildpack.CopyFile(artifact, destination); e != nil {
-			return e
-		}
-		return os.Chmod(destination, 0755)
+		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
+		return libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0)
 	})
 	if err != nil {
 		return err
 	}
 
-	command := r.command(filepath.Join(r.layer.Root, r.layer.ArtifactName()))
+	command := r.command(filepath.Join(r.layer.Root, functionInvokerExecutable))
 
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 		Processes: libbuildpack.Processes{
