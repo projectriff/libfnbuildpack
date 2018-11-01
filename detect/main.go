@@ -23,6 +23,7 @@ import (
 	"github.com/projectriff/riff-buildpack"
 	"github.com/projectriff/riff-buildpack/command"
 	"github.com/projectriff/riff-buildpack/java"
+	"github.com/projectriff/riff-buildpack/node"
 	"os"
 )
 
@@ -45,21 +46,36 @@ func main() {
 		return
 	}
 
+	// Try java
 	if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
 		detect.Logger.Debug("riff Java application")
 		detect.Pass(java.BuildPlanContribution(metadata))
 		return
-	} else {
-		// Try command invoker as last resort
-		if ok, err := command.DetectCommand(detect, metadata) ; err != nil {
-			detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
-			detect.Error(104)
-			return
-		} else if ok {
-			detect.Logger.Debug("riff Command application")
-			detect.Pass(command.BuildPlanContribution(metadata))
-			return
-		}
+	}
+
+	// Try node
+	// To be later changed to detecting whether the npm BP voted
+	// see https://github.com/projectriff/riff-buildpack/issues/14
+	if ok, err := node.DetectNode(detect, metadata); err != nil {
+		detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
+		detect.Error(104)
+		return
+	} else if ok {
+		detect.Logger.Debug("riff Node application")
+		detect.Pass(node.BuildPlanContribution(metadata))
+		return
+	}
+
+
+	// Try command invoker as last resort
+	if ok, err := command.DetectCommand(detect, metadata); err != nil {
+		detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
+		detect.Error(104)
+		return
+	} else if ok {
+		detect.Logger.Debug("riff Command application")
+		detect.Pass(command.BuildPlanContribution(metadata))
+		return
 	}
 
 	detect.Logger.Info("Detected riff application but unable to determine application type.")

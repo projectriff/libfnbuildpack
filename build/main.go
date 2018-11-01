@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"github.com/projectriff/riff-buildpack/command"
+	"github.com/projectriff/riff-buildpack/node"
 	"os"
 
 	"github.com/cloudfoundry/libjavabuildpack"
@@ -42,6 +43,20 @@ func main() {
 		if err = invoker.Contribute(); err != nil {
 			build.Logger.Info(err.Error())
 			build.Failure(103)
+			return
+		}
+		build.Success()
+		return
+	}
+
+	if invoker, ok, err := node.NewNodeInvoker(build); err != nil {
+		build.Logger.Info(err.Error())
+		build.Failure(105)
+		return
+	} else if ok {
+		if err = invoker.Contribute(); err != nil {
+			build.Logger.Info(err.Error())
+			build.Failure(106)
 			return
 		}
 		build.Success()
