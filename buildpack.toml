@@ -44,6 +44,18 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
   type = "Apache-2.0"
   uri  = "https://github.com/projectriff/command-function-invoker/blob/master/LICENSE"
 
+[[metadata.dependencies]]
+id      = "riff-invoker-node"
+name    = "riff Node Invoker"
+version = "0.0.9+snapshot"
+uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/node-function-invoker-0.0.9-snapshot.tgz"
+sha256  = "2f3c4f12a0464d4635dd9f95083fb2311ff5e37b7a38bd3d92782bb820b8f563"
+stacks  = [ "io.buildpacks.stacks.bionic" ]
+
+  [[metadata.dependencies.licenses]]
+  type = "Apache-2.0"
+  uri  = "https://github.com/projectriff/node-function-invoker/blob/master/LICENSE"
+
 
 
 [metadata]
