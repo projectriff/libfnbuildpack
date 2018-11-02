@@ -29,6 +29,9 @@ import (
 const (
 	// riffNodeInvokerDependency is a key identifying the node invoker dependency in the build plan.
 	riffNodeInvokerDependency = "riff-invoker-node"
+
+	// functionArtifact is a key identifying the path to the function entrypoint in the build plan.
+	functionArtifact = "fn"
 )
 
 // RiffNodeInvoker represents the Node invoker contributed by the buildpack.
@@ -49,7 +52,7 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 		// Ask for the node invoker
 		riffNodeInvokerDependency: libbuildpack.BuildPlanDependency{
 			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				"fn": metadata.Artifact,
+				functionArtifact: metadata.Artifact,
 			},
 		},
 	}
@@ -108,9 +111,9 @@ func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error)
 		return RiffNodeInvoker{}, false, err
 	}
 
-	functionJS, ok := bp.Metadata["fn"].(string)
+	functionJS, ok := bp.Metadata[functionArtifact].(string)
 	if !ok {
-		return RiffNodeInvoker{}, false, fmt.Errorf("node metadata of incorrect type: %v", bp.Metadata["fn"])
+		return RiffNodeInvoker{}, false, fmt.Errorf("node metadata of incorrect type: %v", bp.Metadata[functionArtifact])
 	}
 
 	return RiffNodeInvoker{

@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 )
 
+// DetectNode answers true if the `artifact` path is set, the file exists and ends in ".js"
 func DetectNode(detect libjavabuildpack.Detect, metadata riff_buildpack.Metadata) (bool, error) {
 	if metadata.Artifact == "" {
 		return false, nil
