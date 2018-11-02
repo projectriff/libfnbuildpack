@@ -59,14 +59,30 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 func (r RiffNodeInvoker) Contribute() error {
 	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
 		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
-		return libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0)
+		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0) ; e != nil {
+			return e
+		}
+		entrypoint := filepath.Join(r.application.Root, r.functionJS)
+		if e := layer.WriteProfile("function-uri", `export FUNCTION_URI="%s"`, entrypoint) ; e != nil {
+			return e
+		}
+		if e := layer.WriteProfile("riff-function-invoker-protocol", `export RIFF_FUNCTION_INVOKER_PROTOCOL=http`) ; e != nil {
+			return e
+		}
+		if e := layer.WriteProfile("host", `export HOST=0.0.0.0`) ; e != nil {
+			return e
+		}
+		if e := layer.WriteProfile("http-port", `export HTTP_PORT=8080`) ; e != nil {
+			return e
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	entrypoint := filepath.Join(r.application.Root, r.functionJS)
-	command := fmt.Sprintf(`FUNCTION_URI="%s" RIFF_FUNCTION_INVOKER_PROTOCOL=http HOST=0.0.0.0 HTTP_PORT=8080 $NODE_HOME/bin/node %s/server.js`, entrypoint, r.layer.Root)
+	command := fmt.Sprintf(`node %s/server.js`, r.layer.Root)
 
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 		Processes: libbuildpack.Processes{
