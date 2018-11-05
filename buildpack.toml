@@ -36,8 +36,8 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
 id      = "riff-invoker-command"
 name    = "riff Command Invoker"
 version = "0.0.8+snapshot"
-uri     = "https://storage.googleapis.com/projectriff/command-function-invoker/command-function-inovker-linux-amd64-0.0.8-snapshot.tgz"
-sha256  = "94c15af822230c5e93b6a5a634b25d0d07d0384b99609df6c8e14484e9def465"
+uri     = "https://storage.googleapis.com/projectriff/command-function-invoker/command-function-invoker-linux-amd64-0.0.8-82fc5f8476d01a84555bae7b80cd89c06c749279.tgz"
+sha256  = "e88853ced8fddde3c84ae4336275008abd4c4c6dbbe8ac6c9a1a8346f6713fc7"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]
@@ -47,9 +47,9 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
 [[metadata.dependencies]]
 id      = "riff-invoker-node"
 name    = "riff Node Invoker"
-version = "0.0.9+snapshot"
-uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/node-function-invoker-0.0.9-snapshot.tgz"
-sha256  = "2f3c4f12a0464d4635dd9f95083fb2311ff5e37b7a38bd3d92782bb820b8f563"
+version = "0.1.0+snapshot"
+uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/releases/v0.1.0-snapshot/snapshots/node-function-invoker-0.1.0-snapshot-57dd4d88905c415f8d6e7d9c6d1733a01947a832.tgz"
+sha256  = "1976f2e657dcc0e4cebe7fa8d7179b2c72dac0cc89365193bbca90391d493dde"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]

@@ -23,6 +23,8 @@ import (
 	"github.com/cloudfoundry/libjavabuildpack"
 	nodejs_cnb "github.com/cloudfoundry/nodejs-cnb/build"
 	"github.com/projectriff/riff-buildpack"
+	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -46,7 +48,7 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 	return libbuildpack.BuildPlan{
 		// Ask the node BP to contribute a node runtime
 		nodejs_cnb.NodeDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{"launch": true},
+			Metadata: libbuildpack.BuildPlanDependencyMetadata{"launch": true, "build": true},
 			Version:  "*",
 		},
 		// Ask for the node invoker
@@ -62,9 +64,18 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 func (r RiffNodeInvoker) Contribute() error {
 	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
 		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
-		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0) ; e != nil {
+		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 1) ; e != nil {
 			return e
 		}
+		layer.Logger.SubsequentLine("npm-installing the node invoker")
+		cmd := exec.Command("npm", "install", "--production")
+		cmd.Stdout = os.Stderr
+		cmd.Stderr = os.Stderr
+		cmd.Dir = layer.Root
+		if e := cmd.Run() ; e != nil {
+			return e
+		}
+
 		entrypoint := filepath.Join(r.application.Root, r.functionJS)
 		if e := layer.WriteProfile("function-uri", `export FUNCTION_URI="%s"`, entrypoint) ; e != nil {
 			return e
