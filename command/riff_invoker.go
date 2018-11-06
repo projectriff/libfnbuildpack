@@ -58,7 +58,7 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 // Contribute makes the contribution to the launch layer
 func (r RiffCommandInvoker) Contribute() error {
 	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
-		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
+		layer.Logger.SubsequentLine("Expanding %s to %s", artifact, layer.Root)
 		return libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0)
 	})
 	if err != nil {
