@@ -27,17 +27,26 @@ import (
 	"os"
 )
 
+const (
+	Error_Initialize          = 101
+	Error_ReadMetadata        = 102
+	Error_DetectedNone        = 103
+	Error_DetectAmbiguity     = 104
+	Error_UnsupportedLanguage = 105
+	Error_DetectInternalError = 106
+)
+
 func main() {
 	detect, err := libjavabuildpack.DefaultDetect()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err.Error())
-		os.Exit(101)
+		os.Exit(Error_Initialize)
 	}
 
 	metadata, ok, err := riff_buildpack.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
 		detect.Logger.Info("Unable to read riff metadata: %s", err.Error())
-		detect.Error(102)
+		detect.Error(Error_ReadMetadata)
 		return
 	}
 
@@ -46,39 +55,61 @@ func main() {
 		return
 	}
 
-	// Try java
-	if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
-		detect.Logger.Debug("riff Java application")
+	detected := []string{}
+
+	if metadata.Override == "" {
+		// Try java
+		if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
+			detected = append(detected, "java")
+		}
+		// Try node
+		// To be later changed to detecting whether the npm BP voted
+		// see https://github.com/projectriff/riff-buildpack/issues/14
+		if ok, err := node.DetectNode(detect, metadata); err != nil {
+			detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
+			detect.Error(Error_DetectInternalError)
+			return
+		} else if ok {
+			detected = append(detected, "node")
+		}
+		// Try command invoker as last resort
+		if ok, err := command.DetectCommand(detect, metadata); err != nil {
+			detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
+			detect.Error(Error_DetectInternalError)
+			return
+		} else if ok {
+			detected = append(detected, "command")
+		}
+
+		if len(detected) == 0 {
+			detect.Logger.Info("Detected riff function but unable to determine function type.")
+			detect.Error(Error_DetectedNone)
+			return
+		} else if len(detected) > 1 {
+			detect.Logger.Info("Detected riff function but ambiguous language detected: %v.", detected)
+			detect.Error(Error_DetectAmbiguity)
+			return
+		}
+
+		detect.Logger.Info("Detected language: %q.", detected[0])
+
+	} else {
+		detected = []string{metadata.Override}
+	}
+
+	switch detected[0] {
+	case "java":
 		detect.Pass(java.BuildPlanContribution(metadata))
 		return
-	}
-
-	// Try node
-	// To be later changed to detecting whether the npm BP voted
-	// see https://github.com/projectriff/riff-buildpack/issues/14
-	if ok, err := node.DetectNode(detect, metadata); err != nil {
-		detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
-		detect.Error(104)
-		return
-	} else if ok {
-		detect.Logger.Debug("riff Node application")
+	case "node":
 		detect.Pass(node.BuildPlanContribution(metadata))
 		return
-	}
-
-
-	// Try command invoker as last resort
-	if ok, err := command.DetectCommand(detect, metadata); err != nil {
-		detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
-		detect.Error(104)
-		return
-	} else if ok {
-		detect.Logger.Debug("riff Command application")
+	case "command":
 		detect.Pass(command.BuildPlanContribution(metadata))
 		return
+	default:
+		detect.Logger.Info("Unsupported language: %v.", detected[0])
+		detect.Error(Error_UnsupportedLanguage)
+		return
 	}
-
-	detect.Logger.Info("Detected riff application but unable to determine application type.")
-	detect.Error(103)
-	return
 }

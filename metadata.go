@@ -34,6 +34,10 @@ type Metadata struct {
 	// This may be a classname, a function name, etc. May be autodetected or chosen by a collaborating
 	// buildpack or function invoker.
 	Handler string `toml:"handler"`
+
+	// Override is an optional value provided by the user to force a given language for the function and
+	// completely bypass the detection mechanism, if needed.
+	Override string `toml:"override"`
 }
 
 // String makes Metadata satisfy the Stringer interface.

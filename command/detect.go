@@ -18,7 +18,6 @@
 package command
 
 import (
-	"fmt"
 	"github.com/cloudfoundry/libjavabuildpack"
 	"github.com/projectriff/riff-buildpack"
 	"os"
@@ -40,9 +39,9 @@ func DetectCommand(detect libjavabuildpack.Detect, metadata riff_buildpack.Metad
 	if err != nil {
 		return false, err
 	}
-	if info.Mode().Perm() & 0100 == 0100 {
+	if info.Mode().Perm()&0100 == 0100 {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("missing exec permission on %s", path)
+		return false, nil
 	}
 }
