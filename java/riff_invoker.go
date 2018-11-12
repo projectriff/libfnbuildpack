@@ -70,8 +70,13 @@ func (r RiffInvoker) String() string {
 }
 
 func (r RiffInvoker) command(destination string) string {
-	return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=%s'",
-		destination, r.application.Root, r.handler)
+	if len(r.handler) > 0 {
+		return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=%s'",
+			destination, r.application.Root, r.handler)
+	} else {
+		return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s'",
+			destination, r.application.Root)
+	}
 }
 
 // BuildPlanContribution returns the BuildPlan with requirements for the invoker
