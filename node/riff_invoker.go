@@ -76,10 +76,6 @@ func (r RiffNodeInvoker) Contribute() error {
 			return e
 		}
 
-		entrypoint := filepath.Join(r.application.Root, r.functionJS)
-		if e := layer.WriteProfile("function-uri", `export FUNCTION_URI="%s"`, entrypoint) ; e != nil {
-			return e
-		}
 		if e := layer.WriteProfile("riff-function-invoker-protocol", `export RIFF_FUNCTION_INVOKER_PROTOCOL=http`) ; e != nil {
 			return e
 		}
@@ -96,6 +92,10 @@ func (r RiffNodeInvoker) Contribute() error {
 		return err
 	}
 
+	entrypoint := filepath.Join(r.application.Root, r.functionJS)
+	if e := r.layer.WriteProfile("function-uri", `export FUNCTION_URI="%s"`, entrypoint) ; e != nil {
+		return e
+	}
 	command := fmt.Sprintf(`node %s/server.js`, r.layer.Root)
 
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{

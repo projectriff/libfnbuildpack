@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/cloudfoundry/jvm-application-buildpack"
 	"github.com/cloudfoundry/libjavabuildpack"
+	npmdetect "github.com/cloudfoundry/npm-cnb/detect"
 	"github.com/projectriff/riff-buildpack"
 	"github.com/projectriff/riff-buildpack/command"
 	"github.com/projectriff/riff-buildpack/java"
@@ -62,16 +63,12 @@ func main() {
 		if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
 			detected = append(detected, "java")
 		}
-		// Try node
-		// To be later changed to detecting whether the npm BP voted
-		// see https://github.com/projectriff/riff-buildpack/issues/14
-		if ok, err := node.DetectNode(detect, metadata); err != nil {
-			detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
-			detect.Error(Error_DetectInternalError)
-			return
-		} else if ok {
+
+		// Try npm
+		if _, ok := detect.BuildPlan[npmdetect.NPMDependency]; ok {
 			detected = append(detected, "node")
 		}
+
 		// Try command invoker as last resort
 		if ok, err := command.DetectCommand(detect, metadata); err != nil {
 			detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
