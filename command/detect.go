@@ -36,7 +36,7 @@ func DetectCommand(detect libjavabuildpack.Detect, metadata riff_buildpack.Metad
 		return false, err
 	}
 	info, err := os.Stat(path)
-	if err != nil {
+	if err != nil || info.IsDir() {
 		return false, err
 	}
 	if info.Mode().Perm()&0100 == 0100 {
