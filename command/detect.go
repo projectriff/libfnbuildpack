@@ -36,10 +36,10 @@ func DetectCommand(detect libjavabuildpack.Detect, metadata riff_buildpack.Metad
 		return false, err
 	}
 	info, err := os.Stat(path)
-	if err != nil || info.IsDir() {
+	if err != nil {
 		return false, err
 	}
-	if info.Mode().Perm()&0100 == 0100 {
+	if info.Mode().IsRegular() && info.Mode().Perm()&0100 == 0100 {
 		return true, nil
 	} else {
 		detect.Logger.Debug("Disregarding %q for the 'command' invoker, as it does not have executable permission", path)
