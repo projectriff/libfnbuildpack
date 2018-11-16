@@ -67,6 +67,15 @@ func main() {
 		// Try npm
 		if _, ok := detect.BuildPlan[npmdetect.NPMDependency]; ok {
 			detected = append(detected, "node")
+		} else {
+			// Try node
+			if ok, err := node.DetectNode(detect, metadata); err != nil {
+				detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
+				detect.Error(Error_DetectInternalError)
+				return
+			} else if ok {
+				detected = append(detected, "node")
+			}
 		}
 
 		// Try command invoker as last resort

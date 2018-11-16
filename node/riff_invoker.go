@@ -76,9 +76,6 @@ func (r RiffNodeInvoker) Contribute() error {
 			return e
 		}
 
-		if e := layer.WriteProfile("riff-function-invoker-protocol", `export RIFF_FUNCTION_INVOKER_PROTOCOL=http`) ; e != nil {
-			return e
-		}
 		if e := layer.WriteProfile("host", `export HOST=0.0.0.0`) ; e != nil {
 			return e
 		}
