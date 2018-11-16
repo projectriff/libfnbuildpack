@@ -44,15 +44,10 @@ func main() {
 		os.Exit(Error_Initialize)
 	}
 
-	metadata, ok, err := riff_buildpack.NewMetadata(detect.Application, detect.Logger)
+	metadata, err := riff_buildpack.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
 		detect.Logger.Info("Unable to read riff metadata: %s", err.Error())
 		detect.Error(Error_ReadMetadata)
-		return
-	}
-
-	if !ok {
-		detect.Fail()
 		return
 	}
 

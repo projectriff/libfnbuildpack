@@ -35,16 +35,17 @@ func TestMetadata(t *testing.T) {
 
 func testMetadata(t *testing.T, when spec.G, it spec.S) {
 
-	it("returns false if riff.toml does not exist", func() {
+	it("returns empty metadata if riff.toml does not exist", func() {
 		f := test.NewBuildFactory(t)
 
-		_, ok, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
+		actual, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if ok {
-			t.Errorf("NewMetadata = %t, expected false", ok)
+		expected := riff_buildpack.Metadata{}
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("NewMetadata = %s, expected %s", actual, expected)
 		}
 	})
 
@@ -54,13 +55,9 @@ func testMetadata(t *testing.T, when spec.G, it spec.S) {
 		metadata := filepath.Join(f.Build.Application.Root, "riff.toml")
 		libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), metadata, 0644)
 
-		actual, ok, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
+		actual, err := riff_buildpack.NewMetadata(f.Build.Application, f.Build.Logger)
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		if !ok {
-			t.Errorf("NewMetadata = %t, expected true", ok)
 		}
 
 		expected := riff_buildpack.Metadata{Handler: "test-handler"}

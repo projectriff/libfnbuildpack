@@ -35,19 +35,6 @@ func TestDetect(t *testing.T) {
 
 func testDetect(t *testing.T, when spec.G, it spec.S) {
 
-	it("fails without metadata", func() {
-		f := test.NewEnvironmentFactory(t)
-		defer f.Restore()
-
-		f.Console.In(t, "")
-
-		main()
-
-		if *f.ExitStatus != 100 {
-			t.Errorf("os.Exit = %d, expected 100", *f.ExitStatus)
-		}
-	})
-
 	it("passes with metadata and jvm-application", func() {
 		f := test.NewEnvironmentFactory(t)
 		defer f.Restore()
@@ -57,6 +44,19 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 		if err := libjavabuildpack.WriteToFile(strings.NewReader(`handler = "test-handler"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
 			t.Fatal(err)
 		}
+
+		main()
+
+		if *f.ExitStatus != 0 {
+			t.Errorf("os.Exit = %d, expected 0", *f.ExitStatus)
+		}
+	})
+
+	it("passes with no metadata and jvm-application", func() {
+		f := test.NewEnvironmentFactory(t)
+		defer f.Restore()
+
+		f.Console.In(t, fmt.Sprintf("[%s]", jvm_application_buildpack.JVMApplication))
 
 		main()
 

@@ -45,26 +45,25 @@ func (m Metadata) String() string {
 	return fmt.Sprintf("Metadata{ Artifact: %s, Handler: %s }", m.Artifact, m.Handler)
 }
 
-// NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml. If that file does not exist,
-// the second return value is false.
-func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.Logger) (Metadata, bool, error) {
+// NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml.
+func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.Logger) (Metadata, error) {
 	f := filepath.Join(application.Root, "riff.toml")
 
 	exists, err := libjavabuildpack.FileExists(f)
 	if err != nil {
-		return Metadata{}, false, err
+		return Metadata{}, err
 	}
 
 	if !exists {
-		return Metadata{}, false, nil
+		return Metadata{}, nil
 	}
 
 	var metadata Metadata
 	err = libjavabuildpack.FromTomlFile(f, &metadata)
 	if err != nil {
-		return Metadata{}, false, err
+		return Metadata{}, err
 	}
 
 	logger.Debug("riff metadata: %s", metadata)
-	return metadata, true, nil
+	return metadata, nil
 }
