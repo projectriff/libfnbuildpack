@@ -42,7 +42,7 @@ type Metadata struct {
 
 // String makes Metadata satisfy the Stringer interface.
 func (m Metadata) String() string {
-	return fmt.Sprintf("Metadata{ Artifact: %s, Handler: %s }", m.Artifact, m.Handler)
+	return fmt.Sprintf("Metadata{ Artifact: %s, Handler: %s, Override: %s }", m.Artifact, m.Handler, m.Override)
 }
 
 // NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml. If that file does not exist,
