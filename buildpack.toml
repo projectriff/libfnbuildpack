@@ -24,8 +24,8 @@ id = "io.buildpacks.stacks.bionic"
 id      = "riff-invoker-java"
 name    = "riff Java Invoker"
 version = "0.1.3"
-uri     = "https://repo.spring.io/libs-snapshot-local/io/projectriff/java-function-invoker/0.1.3-SNAPSHOT/java-function-invoker-0.1.3-20181114.211611-3-exec.jar"
-sha256  = "43158dcd74ad379d6ca2c02ff26734ff00c204ca552e00218d3abdfd2ffce6e0"
+uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.3/java-function-invoker-0.1.3-exec.jar"
+sha256  = "1081128cc83414925633a0f3eac42b4ef5befe745ad5fb342eedd47afab1658d"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]
