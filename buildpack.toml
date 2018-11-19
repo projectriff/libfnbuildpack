@@ -47,9 +47,9 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
 [[metadata.dependencies]]
 id      = "riff-invoker-node"
 name    = "riff Node Invoker"
-version = "0.1.0+snapshot"
-uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/releases/v0.1.0-snapshot/snapshots/node-function-invoker-0.1.0-snapshot-49db1d7a8b32a61bea0d152cbb817a4e0ca171a3.tgz"
-sha256  = "d0dbef29bd0ddb9c88cf85dd51333226b3dd3393c0ab9d8a836b671499b70dee"
+version = "0.1.0"
+uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/releases/v0.1.0/node-function-invoker-0.1.0.tgz"
+sha256  = "8ca457e564574ead2f5e30c009e8124a6e7fe6a8ec17ef7b41ff40996c372dfd"
 stacks  = [ "io.buildpacks.stacks.bionic" ]
 
   [[metadata.dependencies.licenses]]
