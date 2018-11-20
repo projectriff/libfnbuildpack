@@ -29,11 +29,11 @@ import (
 )
 
 const (
-	// riffNodeInvokerDependency is a key identifying the node invoker dependency in the build plan.
-	riffNodeInvokerDependency = "riff-invoker-node"
+	// RiffNodeInvokerDependency is a key identifying the node invoker dependency in the build plan.
+	RiffNodeInvokerDependency = "riff-invoker-node"
 
 	// functionArtifact is a key identifying the path to the function entrypoint in the build plan.
-	functionArtifact = "fn"
+	FunctionArtifact = "fn"
 )
 
 // RiffNodeInvoker represents the Node invoker contributed by the buildpack.
@@ -52,9 +52,9 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 			Version:  "*",
 		},
 		// Ask for the node invoker
-		riffNodeInvokerDependency: libbuildpack.BuildPlanDependency{
+		RiffNodeInvokerDependency: libbuildpack.BuildPlanDependency{
 			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				functionArtifact: metadata.Artifact,
+				FunctionArtifact: metadata.Artifact,
 			},
 		},
 	}
@@ -104,7 +104,7 @@ func (r RiffNodeInvoker) Contribute() error {
 }
 
 func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error) {
-	bp, ok := build.BuildPlan[riffNodeInvokerDependency]
+	bp, ok := build.BuildPlan[RiffNodeInvokerDependency]
 	if !ok {
 		return RiffNodeInvoker{}, false, nil
 	}
@@ -114,14 +114,14 @@ func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error)
 		return RiffNodeInvoker{}, false, err
 	}
 
-	dep, err := deps.Best(riffNodeInvokerDependency, bp.Version, build.Stack)
+	dep, err := deps.Best(RiffNodeInvokerDependency, bp.Version, build.Stack)
 	if err != nil {
 		return RiffNodeInvoker{}, false, err
 	}
 
-	functionJS, ok := bp.Metadata[functionArtifact].(string)
+	functionJS, ok := bp.Metadata[FunctionArtifact].(string)
 	if !ok {
-		return RiffNodeInvoker{}, false, fmt.Errorf("node metadata of incorrect type: %v", bp.Metadata[functionArtifact])
+		return RiffNodeInvoker{}, false, fmt.Errorf("node metadata of incorrect type: %v", bp.Metadata[FunctionArtifact])
 	}
 
 	return RiffNodeInvoker{
