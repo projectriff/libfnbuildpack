@@ -27,10 +27,10 @@ import (
 
 const (
 	// RiffCommandInvokerDependency is a key identifying the command invoker dependency in the build plan.
-	riffCommandInvokerDependency = "riff-invoker-command"
+	RiffCommandInvokerDependency = "riff-invoker-command"
 
 	// command is the key identifying the command executable in the build plan.
-	command = "command"
+	Command = "command"
 
 	// functionInvokerExecutable is the name of the function invoker in the tgz dependency
 	functionInvokerExecutable = "command-function-invoker"
@@ -46,9 +46,9 @@ type RiffCommandInvoker struct {
 
 func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
 	plans := libbuildpack.BuildPlan{
-		riffCommandInvokerDependency: libbuildpack.BuildPlanDependency{
+		RiffCommandInvokerDependency: libbuildpack.BuildPlanDependency{
 			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				command: metadata.Artifact,
+				Command: metadata.Artifact,
 			},
 		},
 	}
@@ -81,7 +81,7 @@ func (r RiffCommandInvoker) command(invokerPath string) string {
 }
 
 func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, error) {
-	bp, ok := build.BuildPlan[riffCommandInvokerDependency]
+	bp, ok := build.BuildPlan[RiffCommandInvokerDependency]
 	if !ok {
 		return RiffCommandInvoker{}, false, nil
 	}
@@ -91,14 +91,14 @@ func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, 
 		return RiffCommandInvoker{}, false, err
 	}
 
-	dep, err := deps.Best(riffCommandInvokerDependency, bp.Version, build.Stack)
+	dep, err := deps.Best(RiffCommandInvokerDependency, bp.Version, build.Stack)
 	if err != nil {
 		return RiffCommandInvoker{}, false, err
 	}
 
-	exec, ok := bp.Metadata[command].(string)
+	exec, ok := bp.Metadata[Command].(string)
 	if !ok {
-		return RiffCommandInvoker{}, false, fmt.Errorf("command metadata of incorrect type: %v", bp.Metadata[command])
+		return RiffCommandInvoker{}, false, fmt.Errorf("command metadata of incorrect type: %v", bp.Metadata[Command])
 	}
 
 	return RiffCommandInvoker{
