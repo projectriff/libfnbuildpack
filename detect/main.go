@@ -97,7 +97,7 @@ func main() {
 			return
 		}
 
-		detect.Logger.Info("Detected language: %q.", detected[0])
+		detect.Logger.Debug("Detected language: %q.", detected[0])
 
 	} else {
 		detected = []string{metadata.Override}
