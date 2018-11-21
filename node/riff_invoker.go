@@ -90,10 +90,7 @@ func (r RiffNodeInvoker) Contribute() error {
 	}
 
 	entrypoint := filepath.Join(r.application.Root, r.functionJS)
-	if e := r.layer.WriteProfile("function-uri", `export FUNCTION_URI="%s"`, entrypoint) ; e != nil {
-		return e
-	}
-	command := fmt.Sprintf(`node %s/server.js`, r.layer.Root)
+	command := fmt.Sprintf(`FUNCTION_URI="%s" node %s/server.js`, entrypoint, r.layer.Root)
 
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 		Processes: libbuildpack.Processes{
