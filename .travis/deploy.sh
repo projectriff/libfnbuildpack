@@ -1,6 +1,8 @@
 #!/bin/bash
 
-gcloud auth activate-service-account --key-file <(echo $GCLOUD_CLIENT_SECRET | base64 --decode)
+set -o errexit
+set -o nounset
+set -o pipefail
 
-gsutil cp -a public-read scratch/io/projectriff/riff/io.projectriff.riff/*/*.tgz gs://projectriff/riff-buildpack/
-gsutil cp -a public-read scratch/io/projectriff/riff/io.projectriff.riff/*/*.tgz gs://projectriff/riff-buildpack/latest.tgz
+./deploy.sh
+./trigger-builder-build.sh
