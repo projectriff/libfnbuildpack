@@ -38,10 +38,21 @@ const (
 
 // RiffNodeInvoker represents the Node invoker contributed by the buildpack.
 type RiffNodeInvoker struct {
+	// A reference to the user function source tree.
 	application libbuildpack.Application
-	functionJS  string
-	launch      libjavabuildpack.Launch
-	layer       libjavabuildpack.DependencyLaunchLayer
+
+	// The file in the function tree that is the entrypoint.
+	// May be empty, in which case the function is require()d as a node module.
+	functionJS string
+
+	// Provides access to the launch layers, used to craft the process commands.
+	launch libjavabuildpack.Launch
+
+	// A dedicated layer for the node invoker itself. Cacheable once npm-installed
+	invokerLayer libjavabuildpack.DependencyLaunchLayer
+
+	// A dedicated for the function location. Not cacheable, as it changes with the value of functionJS.
+	functionLayer libbuildpack.LaunchLayer
 }
 
 func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
@@ -62,9 +73,9 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 
 // Contribute expands the node invoker tgz and creates launch configurations that run "node server.js"
 func (r RiffNodeInvoker) Contribute() error {
-	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+	if err := r.invokerLayer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
 		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
-		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 1) ; e != nil {
+		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 1); e != nil {
 			return e
 		}
 		layer.Logger.SubsequentLine("npm-installing the node invoker")
@@ -72,26 +83,33 @@ func (r RiffNodeInvoker) Contribute() error {
 		cmd.Stdout = os.Stderr
 		cmd.Stderr = os.Stderr
 		cmd.Dir = layer.Root
-		if e := cmd.Run() ; e != nil {
+		if e := cmd.Run(); e != nil {
 			return e
 		}
 
-		if e := layer.WriteProfile("host", `export HOST=0.0.0.0`) ; e != nil {
+		if e := layer.WriteProfile("HOST", `export HOST=0.0.0.0`); e != nil {
 			return e
 		}
-		if e := layer.WriteProfile("http-port", `export HTTP_PORT=8080`) ; e != nil {
+		if e := layer.WriteProfile("HTTP_PORT", `export HTTP_PORT=8080`); e != nil {
 			return e
 		}
 
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
-	entrypoint := filepath.Join(r.application.Root, r.functionJS)
-	command := fmt.Sprintf(`FUNCTION_URI="%s" node %s/server.js`, entrypoint, r.layer.Root)
 
+	entrypoint := filepath.Join(r.application.Root, r.functionJS)
+	if err := r.functionLayer.WriteProfile("FUNCTION_URI", fmt.Sprintf(`export FUNCTION_URI="%s"`, entrypoint)) ; err != nil {
+		return err
+	}
+	if err := r.functionLayer.WriteMetadata(struct {}{}) ; err != nil {
+		return err
+	}
+
+
+	command := fmt.Sprintf(`node %s/server.js`, r.invokerLayer.Root)
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 		Processes: libbuildpack.Processes{
 			libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
@@ -122,10 +140,11 @@ func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error)
 	}
 
 	return RiffNodeInvoker{
-		build.Application,
-		functionJS,
-		build.Launch,
-		build.Launch.DependencyLayer(dep),
+		application:   build.Application,
+		functionJS:    functionJS,
+		launch:        build.Launch,
+		invokerLayer:  build.Launch.DependencyLayer(dep),
+		functionLayer: build.Launch.Layer("function"),
 	}, true, nil
 
 }
