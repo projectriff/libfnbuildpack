@@ -149,7 +149,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 		f.Console.In(t, "") // empty BP
 
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0744/*<-executable*/); err != nil {
+		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0645/*<-executable*/); err != nil {
 			t.Fatal(err)
 		}
 		if err := libjavabuildpack.WriteToFile(strings.NewReader(`artifact = "fn.sh"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
@@ -181,7 +181,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 		f.Console.In(t, fmt.Sprintf("[%s]\n[%s]", jvm_application_buildpack.JVMApplication, npmdetect.NPMDependency))
 
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0744/*<-executable*/); err != nil {
+		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0645/*<-executable*/); err != nil {
 			t.Fatal(err)
 		}
 		if err := libjavabuildpack.WriteToFile(strings.NewReader(`artifact = "fn.sh"`), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {
@@ -202,7 +202,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 		f.Console.In(t, fmt.Sprintf("[%s]\n[%s]", jvm_application_buildpack.JVMApplication, npmdetect.NPMDependency))
 
-		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0744/*<-executable*/); err != nil {
+		if err := libjavabuildpack.WriteToFile(strings.NewReader(`some bash`), filepath.Join(f.Application, "fn.sh"), 0645/*<-executable*/); err != nil {
 			t.Fatal(err)
 		}
 		if err := libjavabuildpack.WriteToFile(strings.NewReader("artifact = \"fn.sh\"\noverride = \"java\""), filepath.Join(f.Application, "riff.toml"), 0644); err != nil {

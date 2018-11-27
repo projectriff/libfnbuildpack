@@ -51,7 +51,7 @@ type RiffNodeInvoker struct {
 	// A dedicated layer for the node invoker itself. Cacheable once npm-installed
 	invokerLayer libjavabuildpack.DependencyLaunchLayer
 
-	// A dedicated for the function location. Not cacheable, as it changes with the value of functionJS.
+	// A dedicated layer for the function location. Not cacheable, as it changes with the value of functionJS.
 	functionLayer libbuildpack.LaunchLayer
 }
 
