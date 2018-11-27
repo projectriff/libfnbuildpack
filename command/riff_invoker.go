@@ -38,10 +38,20 @@ const (
 
 // RiffCommandInvoker represents the Command invoker contributed by the buildpack.
 type RiffCommandInvoker struct {
+	// A reference to the user function source tree.
 	application libbuildpack.Application
-	executable  string
-	launch      libjavabuildpack.Launch
-	layer       libjavabuildpack.DependencyLaunchLayer
+
+	// The function executable. Must have exec permissions.
+	executable string
+
+	// Provides access to the launch layers, used to craft the process commands.
+	launch libjavabuildpack.Launch
+
+	// A dedicated layer for the command invoker itself. Cacheable.
+	invokerLayer libjavabuildpack.DependencyLaunchLayer
+
+	// A dedicated layer for the function location. Not cacheable, as it changes with the value of executable.
+	functionLayer libbuildpack.LaunchLayer
 }
 
 func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
@@ -57,27 +67,28 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 
 // Contribute makes the contribution to the launch layer
 func (r RiffCommandInvoker) Contribute() error {
-	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+	if err := r.invokerLayer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
 		layer.Logger.SubsequentLine("Expanding %s to %s", artifact, layer.Root)
 		return libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0)
-	})
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
-	command := r.command(filepath.Join(r.layer.Root, functionInvokerExecutable))
+	functionURI := filepath.Join(r.application.Root, r.executable)
+	if err := r.functionLayer.WriteProfile("FUNCTION_URI", fmt.Sprintf(`export FUNCTION_URI='%s'`, functionURI)) ; err != nil {
+		return err
+	}
+	if err := r.functionLayer.WriteMetadata(struct{}{}) ; err != nil {
+		return err
+	}
 
+	command := filepath.Join(r.invokerLayer.Root, functionInvokerExecutable)
 	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
 		Processes: libbuildpack.Processes{
-			libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
+			libbuildpack.Process{Type: "web", Command: command},
 			libbuildpack.Process{Type: "function", Command: command},
 		},
 	})
-}
-
-func (r RiffCommandInvoker) command(invokerPath string) string {
-	fn := filepath.Join(r.application.Root, r.executable)
-	return fmt.Sprintf(`FUNCTION_URI=%s %s`, fn, invokerPath)
 }
 
 func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, error) {
@@ -102,10 +113,11 @@ func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, 
 	}
 
 	return RiffCommandInvoker{
-		build.Application,
-		exec,
-		build.Launch,
-		build.Launch.DependencyLayer(dep),
+		application:   build.Application,
+		executable:    exec,
+		launch:        build.Launch,
+		invokerLayer:  build.Launch.DependencyLayer(dep),
+		functionLayer: build.Launch.Layer("function"),
 	}, true, nil
 
 }
