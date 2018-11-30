@@ -56,8 +56,6 @@ stacks  = [ "io.buildpacks.stacks.bionic" ]
   type = "Apache-2.0"
   uri  = "https://github.com/projectriff/node-function-invoker/blob/master/LICENSE"
 
-
-
 [metadata]
   pre_package = "ci/build.sh"
   include_files = [

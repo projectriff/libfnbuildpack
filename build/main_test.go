@@ -19,27 +19,21 @@ package main
 import (
 	"testing"
 
-	"github.com/cloudfoundry/libjavabuildpack/test"
+	"github.com/cloudfoundry/libcfbuildpack/test"
+	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
 
 func TestBuild(t *testing.T) {
-	spec.Run(t, "Build", testBuild, spec.Report(report.Terminal{}))
-}
+	spec.Run(t, "Build", func(t *testing.T, _ spec.G, it spec.S) {
 
-func testBuild(t *testing.T, when spec.G, it spec.S) {
+		g := NewGomegaWithT(t)
 
-	it("fails if unsupported type", func() {
-		f := test.NewEnvironmentFactory(t)
-		defer f.Restore()
+		it("fails if unsupported type", func() {
+			f := test.NewBuildFactory(t)
 
-		f.Console.In(t, "")
-
-		main()
-
-		if *f.ExitStatus != 104 {
-			t.Errorf("os.Exit = %d, expected 104", *f.ExitStatus)
-		}
-	})
+			g.Expect(b(f.Build)).To(Equal(104))
+		})
+	}, spec.Report(report.Terminal{}))
 }

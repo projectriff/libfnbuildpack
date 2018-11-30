@@ -18,65 +18,60 @@ package main
 
 import (
 	"fmt"
-	"github.com/projectriff/riff-buildpack/command"
-	"github.com/projectriff/riff-buildpack/node"
 	"os"
 
-	"github.com/cloudfoundry/libjavabuildpack"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/projectriff/riff-buildpack/command"
 	"github.com/projectriff/riff-buildpack/java"
+	"github.com/projectriff/riff-buildpack/node"
 )
 
 func main() {
-	build, err := libjavabuildpack.DefaultBuild()
+	build, err := build.DefaultBuild()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err)
 		os.Exit(101)
 	}
 
-	build.Logger.FirstLine(build.Logger.PrettyVersion(build.Buildpack))
+	if code, err := b(build); err != nil {
+		build.Logger.Info(err.Error())
+		os.Exit(code)
+	} else {
+		os.Exit(code)
+	}
+}
+
+func b(build build.Build) (int, error) {
+	build.Logger.FirstLine(build.Logger.PrettyIdentity(build.Buildpack))
 
 	if invoker, ok, err := java.NewRiffInvoker(build); err != nil {
-		build.Logger.Info(err.Error())
-		build.Failure(102)
-		return
+		return build.Failure(102), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
-			build.Logger.Info(err.Error())
-			build.Failure(103)
-			return
+			return build.Failure(103), err
 		}
-		build.Success()
-		return
+		return build.Success(buildplan.BuildPlan{})
 	}
 
 	if invoker, ok, err := node.NewNodeInvoker(build); err != nil {
-		build.Logger.Info(err.Error())
-		build.Failure(105)
-		return
+		return build.Failure(105), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
-			build.Logger.Info(err.Error())
-			build.Failure(106)
-			return
+			return build.Failure(106), err
 		}
-		build.Success()
-		return
+		return build.Success(buildplan.BuildPlan{})
 	}
 
 	if invoker, ok, err := command.NewCommandInvoker(build); err != nil {
-		build.Logger.Info(err.Error())
-		build.Failure(102)
-		return
+		return build.Failure(102), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
-			build.Logger.Info(err.Error())
-			build.Failure(103)
-			return
+			return build.Failure(103), err
 		}
-		build.Success()
-		return
+		return build.Success(buildplan.BuildPlan{})
 	}
 
 	build.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
-	build.Failure(104)
+	return build.Failure(104), nil
 }

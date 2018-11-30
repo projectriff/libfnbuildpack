@@ -19,18 +19,22 @@ package node
 
 import (
 	"fmt"
-	"github.com/buildpack/libbuildpack"
-	"github.com/cloudfoundry/libjavabuildpack"
-	nodejs_cnb "github.com/cloudfoundry/nodejs-cnb/build"
-	"github.com/projectriff/riff-buildpack"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/buildpack/libbuildpack/application"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/cloudfoundry/libcfbuildpack/layers"
+	"github.com/cloudfoundry/nodejs-cnb/node"
+	"github.com/projectriff/riff-buildpack/metadata"
 )
 
 const (
-	// RiffNodeInvokerDependency is a key identifying the node invoker dependency in the build plan.
-	RiffNodeInvokerDependency = "riff-invoker-node"
+	// Dependency is a key identifying the node invoker dependency in the build plan.
+	Dependency = "riff-invoker-node"
 
 	// functionArtifact is a key identifying the path to the function entrypoint in the build plan.
 	FunctionArtifact = "fn"
@@ -39,43 +43,40 @@ const (
 // RiffNodeInvoker represents the Node invoker contributed by the buildpack.
 type RiffNodeInvoker struct {
 	// A reference to the user function source tree.
-	application libbuildpack.Application
+	application application.Application
 
 	// The file in the function tree that is the entrypoint.
 	// May be empty, in which case the function is require()d as a node module.
 	functionJS string
 
 	// Provides access to the launch layers, used to craft the process commands.
-	launch libjavabuildpack.Launch
+	layers layers.Layers
 
 	// A dedicated layer for the node invoker itself. Cacheable once npm-installed
-	invokerLayer libjavabuildpack.DependencyLaunchLayer
+	invokerLayer layers.DependencyLayer
 
 	// A dedicated layer for the function location. Not cacheable, as it changes with the value of functionJS.
-	functionLayer libbuildpack.LaunchLayer
+	functionLayer layers.Layer
 }
 
-func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
-	return libbuildpack.BuildPlan{
+func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
+	return buildplan.BuildPlan{
 		// Ask the node BP to contribute a node runtime
-		nodejs_cnb.NodeDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{"launch": true, "build": true},
-			Version:  "*",
+		node.Dependency: buildplan.Dependency{
+			Metadata: buildplan.Metadata{"launch": true, "build": true},
 		},
 		// Ask for the node invoker
-		RiffNodeInvokerDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				FunctionArtifact: metadata.Artifact,
-			},
+		Dependency: buildplan.Dependency{
+			Metadata: buildplan.Metadata{FunctionArtifact: metadata.Artifact},
 		},
 	}
 }
 
 // Contribute expands the node invoker tgz and creates launch configurations that run "node server.js"
 func (r RiffNodeInvoker) Contribute() error {
-	if err := r.invokerLayer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+	if err := r.invokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		layer.Logger.SubsequentLine("Expanding to %s", layer.Root)
-		if e := libjavabuildpack.ExtractTarGz(artifact, layer.Root, 1); e != nil {
+		if e := helper.ExtractTarGz(artifact, layer.Root, 1); e != nil {
 			return e
 		}
 		layer.Logger.SubsequentLine("npm-installing the node invoker")
@@ -87,39 +88,36 @@ func (r RiffNodeInvoker) Contribute() error {
 			return e
 		}
 
-		if e := layer.WriteProfile("HOST", `export HOST=0.0.0.0`); e != nil {
+		if e := layer.OverrideLaunchEnv("HOST", "0.0.0.0"); e != nil {
 			return e
 		}
-		if e := layer.WriteProfile("HTTP_PORT", `export HTTP_PORT=8080`); e != nil {
+		if e := layer.OverrideLaunchEnv("HTTP_PORT", "8080"); e != nil {
 			return e
 		}
 
 		return nil
-	}); err != nil {
+	}, layers.Launch); err != nil {
 		return err
 	}
 
-
-	entrypoint := filepath.Join(r.application.Root, r.functionJS)
-	if err := r.functionLayer.WriteProfile("FUNCTION_URI", fmt.Sprintf(`export FUNCTION_URI="%s"`, entrypoint)) ; err != nil {
+	if err := r.functionLayer.Contribute(marker{"NodeJS", r.functionJS}, func(layer layers.Layer) error {
+		return layer.OverrideLaunchEnv("FUNCTION_URI", filepath.Join(r.application.Root, r.functionJS))
+	}, layers.Launch); err != nil {
 		return err
 	}
-	if err := r.functionLayer.WriteMetadata(struct {}{}) ; err != nil {
-		return err
-	}
-
 
 	command := fmt.Sprintf(`node %s/server.js`, r.invokerLayer.Root)
-	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
-		Processes: libbuildpack.Processes{
-			libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
-			libbuildpack.Process{Type: "function", Command: command},
+
+	return r.layers.WriteMetadata(layers.Metadata{
+		Processes: layers.Processes{
+			layers.Process{Type: "web", Command: command},
+			layers.Process{Type: "function", Command: command},
 		},
 	})
 }
 
-func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error) {
-	bp, ok := build.BuildPlan[RiffNodeInvokerDependency]
+func NewNodeInvoker(build build.Build) (RiffNodeInvoker, bool, error) {
+	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffNodeInvoker{}, false, nil
 	}
@@ -129,7 +127,7 @@ func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error)
 		return RiffNodeInvoker{}, false, err
 	}
 
-	dep, err := deps.Best(RiffNodeInvokerDependency, bp.Version, build.Stack)
+	dep, err := deps.Best(Dependency, bp.Version, build.Stack)
 	if err != nil {
 		return RiffNodeInvoker{}, false, err
 	}
@@ -142,9 +140,18 @@ func NewNodeInvoker(build libjavabuildpack.Build) (RiffNodeInvoker, bool, error)
 	return RiffNodeInvoker{
 		application:   build.Application,
 		functionJS:    functionJS,
-		launch:        build.Launch,
-		invokerLayer:  build.Launch.DependencyLayer(dep),
-		functionLayer: build.Launch.Layer("function"),
+		layers:        build.Layers,
+		invokerLayer:  build.Layers.DependencyLayer(dep),
+		functionLayer: build.Layers.Layer("function"),
 	}, true, nil
 
+}
+
+type marker struct {
+	Language string `toml:"language"`
+	Function string `toml:"function"`
+}
+
+func (m marker) Identity() (string, string) {
+	return m.Language, m.Function
 }

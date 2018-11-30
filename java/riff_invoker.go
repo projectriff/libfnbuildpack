@@ -20,53 +20,54 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/buildpack/libbuildpack"
-	"github.com/cloudfoundry/libjavabuildpack"
-	"github.com/cloudfoundry/openjdk-buildpack"
-	"github.com/projectriff/riff-buildpack"
+	"github.com/buildpack/libbuildpack/application"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/cloudfoundry/libcfbuildpack/layers"
+	"github.com/cloudfoundry/openjdk-buildpack/jre"
+	"github.com/projectriff/riff-buildpack/metadata"
 )
 
 const (
+	// Dependency is the key identifying the riff java invoker in the buildpack plan.
+	Dependency = "riff-invoker-java"
 	// Handler is the key identifying the riff handler metadata in the build plan
 	Handler = "handler"
-
-	// RiffInvokerDependency is the key identifying the riff java invoker in the buildpack plan.
-	RiffInvokerDependency = "riff-invoker-java"
 )
 
 // RiffInvoker represents the Java invoker contributed by the buildpack.
 type RiffInvoker struct {
-	application libbuildpack.Application
+	application application.Application
 	handler     string
-	launch      libjavabuildpack.Launch
-	layer       libjavabuildpack.DependencyLaunchLayer
+	layer       layers.DependencyLayer
+	layers      layers.Layers
 }
 
 // Contribute makes the contribution to the launch layer
 func (r RiffInvoker) Contribute() error {
-	err := r.layer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+	if err := r.layer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		destination := filepath.Join(layer.Root, layer.ArtifactName())
 		layer.Logger.SubsequentLine("Copying to %s", destination)
-		return libjavabuildpack.CopyFile(artifact, destination)
-	})
-	if err != nil {
+		return helper.CopyFile(artifact, destination)
+	}, layers.Launch); err != nil {
 		return err
 	}
 
 	command := r.command(filepath.Join(r.layer.Root, r.layer.ArtifactName()))
 
-	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
-		Processes: libbuildpack.Processes{
-			libbuildpack.Process{Type: "web", Command: command}, // TODO: Should be unnecessary once arbitrary process types can be started
-			libbuildpack.Process{Type: "function", Command: command},
+	return r.layers.WriteMetadata(layers.Metadata{
+		Processes: layers.Processes{
+			layers.Process{Type: "web", Command: command},
+			layers.Process{Type: "function", Command: command},
 		},
 	})
 }
 
 // String makes RiffInvoker satisfy the Stringer interface.
 func (r RiffInvoker) String() string {
-	return fmt.Sprintf("RiffInvoker{ application: %s, handler: %s, launch: %s, layer :%s }",
-		r.application, r.handler, r.launch, r.layer)
+	return fmt.Sprintf("RiffInvoker{ application: %s, handler: %s, layer: %s, layers :%s }",
+		r.application, r.handler, r.layer, r.layers)
 }
 
 func (r RiffInvoker) command(destination string) string {
@@ -80,15 +81,14 @@ func (r RiffInvoker) command(destination string) string {
 }
 
 // BuildPlanContribution returns the BuildPlan with requirements for the invoker
-func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
-	return libbuildpack.BuildPlan{
-		openjdk_buildpack.JREDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{openjdk_buildpack.LaunchContribution: true},
+func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
+	return buildplan.BuildPlan{
+		jre.Dependency: buildplan.Dependency{
+			Metadata: buildplan.Metadata{jre.LaunchContribution: true},
 			Version:  "1.*",
 		},
-		RiffInvokerDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				Handler: metadata.Handler,
+		Dependency: buildplan.Dependency{
+			Metadata: buildplan.Metadata{Handler: metadata.Handler,
 			},
 		},
 	}
@@ -96,8 +96,8 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 
 // NewRiffInvoker creates a new RiffInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,
 // otherwise false.
-func NewRiffInvoker(build libjavabuildpack.Build) (RiffInvoker, bool, error) {
-	bp, ok := build.BuildPlan[RiffInvokerDependency]
+func NewRiffInvoker(build build.Build) (RiffInvoker, bool, error) {
+	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffInvoker{}, false, nil
 	}
@@ -107,7 +107,7 @@ func NewRiffInvoker(build libjavabuildpack.Build) (RiffInvoker, bool, error) {
 		return RiffInvoker{}, false, err
 	}
 
-	dep, err := deps.Best(RiffInvokerDependency, bp.Version, build.Stack)
+	dep, err := deps.Best(Dependency, bp.Version, build.Stack)
 	if err != nil {
 		return RiffInvoker{}, false, err
 	}
@@ -120,7 +120,7 @@ func NewRiffInvoker(build libjavabuildpack.Build) (RiffInvoker, bool, error) {
 	return RiffInvoker{
 		build.Application,
 		handler,
-		build.Launch,
-		build.Launch.DependencyLayer(dep),
+		build.Layers.DependencyLayer(dep),
+		build.Layers,
 	}, true, nil
 }
