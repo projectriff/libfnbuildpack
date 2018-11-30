@@ -18,20 +18,22 @@
 package command
 
 import (
-	"github.com/cloudfoundry/libjavabuildpack"
-	"github.com/projectriff/riff-buildpack"
 	"os"
 	"path/filepath"
+
+	"github.com/cloudfoundry/libcfbuildpack/detect"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/projectriff/riff-buildpack/metadata"
 )
 
-func DetectCommand(detect libjavabuildpack.Detect, metadata riff_buildpack.Metadata) (bool, error) {
+func DetectCommand(detect detect.Detect, metadata metadata.Metadata) (bool, error) {
 	if metadata.Artifact == "" {
 		return false, nil
 	}
 
 	path := filepath.Join(detect.Application.Root, metadata.Artifact)
 
-	ok, err := libjavabuildpack.FileExists(path)
+	ok, err := helper.FileExists(path)
 	if err != nil || !ok {
 		return false, err
 	}

@@ -19,15 +19,19 @@ package command
 
 import (
 	"fmt"
-	"github.com/buildpack/libbuildpack"
-	"github.com/cloudfoundry/libjavabuildpack"
-	"github.com/projectriff/riff-buildpack"
 	"path/filepath"
+
+	"github.com/buildpack/libbuildpack/application"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/cloudfoundry/libcfbuildpack/layers"
+	"github.com/projectriff/riff-buildpack/metadata"
 )
 
 const (
-	// RiffCommandInvokerDependency is a key identifying the command invoker dependency in the build plan.
-	RiffCommandInvokerDependency = "riff-invoker-command"
+	// Dependency is a key identifying the command invoker dependency in the build plan.
+	Dependency = "riff-invoker-command"
 
 	// command is the key identifying the command executable in the build plan.
 	Command = "command"
@@ -39,25 +43,25 @@ const (
 // RiffCommandInvoker represents the Command invoker contributed by the buildpack.
 type RiffCommandInvoker struct {
 	// A reference to the user function source tree.
-	application libbuildpack.Application
+	application application.Application
 
 	// The function executable. Must have exec permissions.
 	executable string
 
 	// Provides access to the launch layers, used to craft the process commands.
-	launch libjavabuildpack.Launch
+	layers layers.Layers
 
 	// A dedicated layer for the command invoker itself. Cacheable.
-	invokerLayer libjavabuildpack.DependencyLaunchLayer
+	invokerLayer layers.DependencyLayer
 
 	// A dedicated layer for the function location. Not cacheable, as it changes with the value of executable.
-	functionLayer libbuildpack.LaunchLayer
+	functionLayer layers.Layer
 }
 
-func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildPlan {
-	plans := libbuildpack.BuildPlan{
-		RiffCommandInvokerDependency: libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{
+func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
+	plans := buildplan.BuildPlan{
+		Dependency: buildplan.Dependency{
+			Metadata: buildplan.Metadata{
 				Command: metadata.Artifact,
 			},
 		},
@@ -67,32 +71,31 @@ func BuildPlanContribution(metadata riff_buildpack.Metadata) libbuildpack.BuildP
 
 // Contribute makes the contribution to the launch layer
 func (r RiffCommandInvoker) Contribute() error {
-	if err := r.invokerLayer.Contribute(func(artifact string, layer libjavabuildpack.DependencyLaunchLayer) error {
+	if err := r.invokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		layer.Logger.SubsequentLine("Expanding %s to %s", artifact, layer.Root)
-		return libjavabuildpack.ExtractTarGz(artifact, layer.Root, 0)
-	}); err != nil {
+		return helper.ExtractTarGz(artifact, layer.Root, 0)
+	}, layers.Cache, layers.Launch); err != nil {
 		return err
 	}
 
-	functionURI := filepath.Join(r.application.Root, r.executable)
-	if err := r.functionLayer.WriteProfile("FUNCTION_URI", fmt.Sprintf(`export FUNCTION_URI='%s'`, functionURI)) ; err != nil {
-		return err
-	}
-	if err := r.functionLayer.WriteMetadata(struct{}{}) ; err != nil {
+	if err := r.functionLayer.Contribute(marker{"Command", r.executable}, func(layer layers.Layer) error {
+		return layer.OverrideLaunchEnv("FUNCTION_URI", filepath.Join(r.application.Root, r.executable))
+	}, layers.Launch); err != nil {
 		return err
 	}
 
 	command := filepath.Join(r.invokerLayer.Root, functionInvokerExecutable)
-	return r.launch.WriteMetadata(libbuildpack.LaunchMetadata{
-		Processes: libbuildpack.Processes{
-			libbuildpack.Process{Type: "web", Command: command},
-			libbuildpack.Process{Type: "function", Command: command},
+
+	return r.layers.WriteMetadata(layers.Metadata{
+		Processes: layers.Processes{
+			layers.Process{Type: "web", Command: command},
+			layers.Process{Type: "function", Command: command},
 		},
 	})
 }
 
-func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, error) {
-	bp, ok := build.BuildPlan[RiffCommandInvokerDependency]
+func NewCommandInvoker(build build.Build) (RiffCommandInvoker, bool, error) {
+	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffCommandInvoker{}, false, nil
 	}
@@ -102,7 +105,7 @@ func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, 
 		return RiffCommandInvoker{}, false, err
 	}
 
-	dep, err := deps.Best(RiffCommandInvokerDependency, bp.Version, build.Stack)
+	dep, err := deps.Best(Dependency, bp.Version, build.Stack)
 	if err != nil {
 		return RiffCommandInvoker{}, false, err
 	}
@@ -115,9 +118,17 @@ func NewCommandInvoker(build libjavabuildpack.Build) (RiffCommandInvoker, bool, 
 	return RiffCommandInvoker{
 		application:   build.Application,
 		executable:    exec,
-		launch:        build.Launch,
-		invokerLayer:  build.Launch.DependencyLayer(dep),
-		functionLayer: build.Launch.Layer("function"),
+		layers:        build.Layers,
+		invokerLayer:  build.Layers.DependencyLayer(dep),
+		functionLayer: build.Layers.Layer("function"),
 	}, true, nil
+}
 
+type marker struct {
+	Language string `toml:"language"`
+	Function string `toml:"function"`
+}
+
+func (m marker) Identity() (string, string) {
+	return m.Language, m.Function
 }

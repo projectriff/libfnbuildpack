@@ -18,14 +18,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/cloudfoundry/jvm-application-buildpack"
-	"github.com/cloudfoundry/libjavabuildpack"
-	npmdetect "github.com/cloudfoundry/npm-cnb/detect"
-	"github.com/projectriff/riff-buildpack"
+	"os"
+
+	"github.com/cloudfoundry/jvm-application-buildpack/jvmapplication"
+	"github.com/cloudfoundry/libcfbuildpack/detect"
+	"github.com/cloudfoundry/npm-cnb/modules"
 	"github.com/projectriff/riff-buildpack/command"
 	"github.com/projectriff/riff-buildpack/java"
+	"github.com/projectriff/riff-buildpack/metadata"
 	"github.com/projectriff/riff-buildpack/node"
-	"os"
 )
 
 const (
@@ -38,41 +39,51 @@ const (
 )
 
 func main() {
-	detect, err := libjavabuildpack.DefaultDetect()
+	detect, err := detect.DefaultDetect()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err)
 		os.Exit(Error_Initialize)
 	}
 
-	metadata, ok, err := riff_buildpack.NewMetadata(detect.Application, detect.Logger)
+	if err := detect.BuildPlan.Init(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
+		os.Exit(Error_Initialize)
+	}
+
+	if code, err := d(detect); err != nil {
+		detect.Logger.Info(err.Error())
+		os.Exit(code)
+	} else {
+		os.Exit(code)
+	}
+}
+
+func d(detect detect.Detect) (int, error) {
+	metadata, ok, err := metadata.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
-		detect.Logger.Info("Unable to read riff metadata: %s", err.Error())
-		detect.Error(Error_ReadMetadata)
-		return
+		return detect.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}
 
 	if !ok {
-		detect.Fail()
-		return
+		return detect.Fail(), nil
 	}
 
 	detected := []string{}
 
 	if metadata.Override == "" {
 		// Try java
-		if _, ok := detect.BuildPlan[jvm_application_buildpack.JVMApplication]; ok {
+		if _, ok := detect.BuildPlan[jvmapplication.Dependency]; ok {
 			detected = append(detected, "java")
 		}
 
 		// Try npm
-		if _, ok := detect.BuildPlan[npmdetect.NPMDependency]; ok {
+		if _, ok := detect.BuildPlan[modules.Dependency]; ok {
 			detected = append(detected, "node")
 		} else {
 			// Try node
 			if ok, err := node.DetectNode(detect, metadata); err != nil {
 				detect.Logger.Info("Error trying to use node invoker: %s", err.Error())
-				detect.Error(Error_DetectInternalError)
-				return
+				return detect.Error(Error_DetectInternalError), nil
 			} else if ok {
 				detected = append(detected, "node")
 			}
@@ -80,42 +91,30 @@ func main() {
 
 		// Try command invoker as last resort
 		if ok, err := command.DetectCommand(detect, metadata); err != nil {
-			detect.Logger.Info("Error trying to use command invoker: %s", err.Error())
-			detect.Error(Error_DetectInternalError)
-			return
+			return detect.Error(Error_DetectInternalError), fmt.Errorf("error trying to use command invoker: %s", err.Error())
 		} else if ok {
 			detected = append(detected, "command")
 		}
 
 		if len(detected) == 0 {
-			detect.Logger.Info("Detected riff function but unable to determine function type.")
-			detect.Error(Error_DetectedNone)
-			return
+			return detect.Error(Error_DetectedNone), fmt.Errorf("detected riff function but unable to determine function type")
 		} else if len(detected) > 1 {
-			detect.Logger.Info("Detected riff function but ambiguous language detected: %v.", detected)
-			detect.Error(Error_DetectAmbiguity)
-			return
+			return detect.Error(Error_DetectAmbiguity), fmt.Errorf("detected riff function but ambiguous language detected: %v", detected)
 		}
 
 		detect.Logger.Debug("Detected language: %q.", detected[0])
-
 	} else {
 		detected = []string{metadata.Override}
 	}
 
 	switch detected[0] {
 	case "java":
-		detect.Pass(java.BuildPlanContribution(metadata))
-		return
+		return detect.Pass(java.BuildPlanContribution(metadata))
 	case "node":
-		detect.Pass(node.BuildPlanContribution(metadata))
-		return
+		return detect.Pass(node.BuildPlanContribution(metadata))
 	case "command":
-		detect.Pass(command.BuildPlanContribution(metadata))
-		return
+		return detect.Pass(command.BuildPlanContribution(metadata))
 	default:
-		detect.Logger.Info("Unsupported language: %v.", detected[0])
-		detect.Error(Error_UnsupportedLanguage)
-		return
+		return detect.Error(Error_UnsupportedLanguage), fmt.Errorf("unsupported language: %v", detected[0])
 	}
 }

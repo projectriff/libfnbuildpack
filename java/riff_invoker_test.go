@@ -19,121 +19,82 @@ package java_test
 import (
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"testing"
 
-	"github.com/BurntSushi/toml"
-	"github.com/buildpack/libbuildpack"
-	"github.com/cloudfoundry/libjavabuildpack/test"
-	"github.com/cloudfoundry/openjdk-buildpack"
-	"github.com/projectriff/riff-buildpack"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/layers"
+	"github.com/cloudfoundry/libcfbuildpack/test"
+	"github.com/cloudfoundry/openjdk-buildpack/jre"
+	. "github.com/onsi/gomega"
 	"github.com/projectriff/riff-buildpack/java"
+	"github.com/projectriff/riff-buildpack/metadata"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
 
 func TestRiffInvoker(t *testing.T) {
-	spec.Run(t, "RiffInvoker", testRiffInvoker, spec.Report(report.Terminal{}))
-}
+	spec.Run(t, "RiffInvoker", func(t *testing.T, _ spec.G, it spec.S) {
 
-func testRiffInvoker(t *testing.T, when spec.G, it spec.S) {
+		g := NewGomegaWithT(t)
 
-	it("contains openjdk-jre", func() {
-		bp := java.BuildPlanContribution(riff_buildpack.Metadata{})
+		var f *test.BuildFactory
 
-		actual := bp[openjdk_buildpack.JREDependency]
-
-		expected := libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{openjdk_buildpack.LaunchContribution: true},
-			Version:  "1.*",
-		}
-
-		if !reflect.DeepEqual(actual, expected) {
-			t.Errorf("BuildPlan[\"openjdk-jre\"] = %s, expected = %s", actual, expected)
-		}
-	})
-
-	it("contains riff-invoker-java", func() {
-		bp := java.BuildPlanContribution(riff_buildpack.Metadata{Handler: "test-handler"})
-
-		actual := bp[java.RiffInvokerDependency]
-
-		expected := libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{
-				java.Handler: "test-handler",
-			},
-		}
-
-		if !reflect.DeepEqual(actual, expected) {
-			t.Errorf("BuildPlan[\"riff-invoker-java\"] = %s, expected = %s", actual, expected)
-		}
-	})
-
-	it("returns true if build plan exists", func() {
-		f := test.NewBuildFactory(t)
-		f.AddDependency(t, java.RiffInvokerDependency, "stub-invoker.jar")
-		f.AddBuildPlan(t, java.RiffInvokerDependency, libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{java.Handler: "test-handler"},
+		it.Before(func() {
+			f = test.NewBuildFactory(t)
+			f.AddDependency(java.Dependency, filepath.Join("testdata", "stub-invoker.jar"))
 		})
 
-		_, ok, err := java.NewRiffInvoker(f.Build)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !ok {
-			t.Errorf("NewRiffInvoker = %t, expected true", ok)
-		}
-	})
-
-	it("returns false if build plan does not exist", func() {
-		f := test.NewBuildFactory(t)
-
-		_, ok, err := java.NewRiffInvoker(f.Build)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ok {
-			t.Errorf("NewRiffInvoker = %t, expected false", ok)
-		}
-	})
-
-	it("contributes invoker", func() {
-		f := test.NewBuildFactory(t)
-		f.AddDependency(t, java.RiffInvokerDependency, "stub-invoker.jar")
-		f.AddBuildPlan(t, java.RiffInvokerDependency, libbuildpack.BuildPlanDependency{
-			Metadata: libbuildpack.BuildPlanDependencyMetadata{java.Handler: "test-handler"},
+		it("contains openjdk-jre and riff-invoker-java in build plan", func() {
+			g.Expect(java.BuildPlanContribution(metadata.Metadata{Handler: "test-handler"})).To(Equal(buildplan.BuildPlan{
+				java.Dependency: buildplan.Dependency{
+					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+				},
+				jre.Dependency: buildplan.Dependency{
+					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
+					Version:  "1.*",
+				},
+			}))
 		})
 
-		r, _, err := java.NewRiffInvoker(f.Build)
-		if err != nil {
-			t.Fatal(err)
-		}
+		it("returns true if build plan exists", func() {
+			f.AddBuildPlan(java.Dependency, buildplan.Dependency{
+				Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+			})
 
-		if err := r.Contribute(); err != nil {
-			t.Fatal(err)
-		}
+			_, ok, err := java.NewRiffInvoker(f.Build)
+			g.Expect(ok).To(BeTrue())
+			g.Expect(err).NotTo(HaveOccurred())
+		})
 
-		layerRoot := filepath.Join(f.Build.Launch.Root, "riff-invoker-java")
-		test.BeFileLike(t, filepath.Join(layerRoot, "stub-invoker.jar"), 0644, "")
+		it("returns false if build plan does not exist", func() {
+			_, ok, err := java.NewRiffInvoker(f.Build)
+			g.Expect(ok).To(BeFalse())
+			g.Expect(err).NotTo(HaveOccurred())
+		})
 
-		var actual libbuildpack.LaunchMetadata
-		_, err = toml.DecodeFile(filepath.Join(f.Build.Launch.Root, "launch.toml"), &actual)
-		if err != nil {
-			t.Fatal(err)
-		}
+		it("contributes invoker", func() {
+			f.AddBuildPlan(java.Dependency, buildplan.Dependency{
+				Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+			})
 
-		command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
-			filepath.Join(layerRoot, "stub-invoker.jar"), f.Build.Application.Root)
+			r, _, err := java.NewRiffInvoker(f.Build)
+			g.Expect(err).NotTo(HaveOccurred())
 
-		expected := libbuildpack.LaunchMetadata{
-			Processes: libbuildpack.Processes{
-				libbuildpack.Process{Type: "web", Command: command},
-				libbuildpack.Process{Type: "function", Command: command},
-			},
-		}
+			g.Expect(r.Contribute()).To(Succeed())
 
-		if !reflect.DeepEqual(actual, expected) {
-			t.Errorf("launch.toml = %s, expected %s", actual, expected)
-		}
-	})
+			layer := f.Build.Layers.Layer("riff-invoker-java")
+			g.Expect(layer).To(test.HaveLayerMetadata(false, false, true))
+			g.Expect(filepath.Join(layer.Root, "stub-invoker.jar")).To(BeARegularFile())
+
+			command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
+				filepath.Join(layer.Root, "stub-invoker.jar"), f.Build.Application.Root)
+
+			g.Expect(f.Build.Layers).To(test.HaveLaunchMetadata(layers.Metadata{
+				Processes: layers.Processes{
+					layers.Process{Type: "web", Command: command},
+					layers.Process{Type: "function", Command: command},
+				},
+			}))
+		})
+	}, spec.Report(report.Terminal{}))
 }
