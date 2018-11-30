@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package riff_buildpack
+package metadata
 
 import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/buildpack/libbuildpack"
-	"github.com/cloudfoundry/libjavabuildpack"
+	"github.com/BurntSushi/toml"
+	"github.com/buildpack/libbuildpack/application"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/cloudfoundry/libcfbuildpack/logger"
 )
 
 // Metadata represents the contents of the riff.toml file in an application root
@@ -47,10 +49,10 @@ func (m Metadata) String() string {
 
 // NewMetadata creates a new Metadata from the contents of $APPLICATION_ROOT/riff.toml. If that file does not exist,
 // the second return value is false.
-func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.Logger) (Metadata, bool, error) {
+func NewMetadata(application application.Application, logger logger.Logger) (Metadata, bool, error) {
 	f := filepath.Join(application.Root, "riff.toml")
 
-	exists, err := libjavabuildpack.FileExists(f)
+	exists, err := helper.FileExists(f)
 	if err != nil {
 		return Metadata{}, false, err
 	}
@@ -60,7 +62,7 @@ func NewMetadata(application libbuildpack.Application, logger libjavabuildpack.L
 	}
 
 	var metadata Metadata
-	err = libjavabuildpack.FromTomlFile(f, &metadata)
+	_, err = toml.DecodeFile(f, &metadata)
 	if err != nil {
 		return Metadata{}, false, err
 	}
