@@ -1,6 +1,6 @@
 language: go
 go:
-  - '1.11'
+  - '1.11.2'
 install: true
 script: GO111MODULE=on make build
 deploy:
@@ -8,4 +8,5 @@ deploy:
   provider: script
   script: bash .travis/deploy.sh
   on:
-    branch: master
+    all_branches: true
+    condition: $TRAVIS_EVENT_TYPE = push && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH =~ ^v[0-9]+\.[0-9]+\.x$)
