@@ -15,7 +15,7 @@
 [buildpack]
 id = "io.projectriff.riff"
 name = "riff Buildpack"
-version = "0.1.1-BUILD-SNAPSHOT"
+version = "0.2.0-BUILD-SNAPSHOT"
 
 [[stacks]]
 id = "io.buildpacks.stacks.bionic"
