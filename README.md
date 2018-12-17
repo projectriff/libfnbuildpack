@@ -69,7 +69,7 @@ make
 ```
 
 This will package (with pre-downloaded cache layers) the buildpack in the 
-`scratch/io/projectriff/riff/io.projectriff.riff/latest` directory. That can be used as a `uri` in a `builder.toml`
+`artifactory/io/projectriff/riff/io.projectriff.riff/latest` directory. That can be used as a `uri` in a `builder.toml`
 file of a builder (see https://github.com/projectriff/riff-buildpack-group)
 
 

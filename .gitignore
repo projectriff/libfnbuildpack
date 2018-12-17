@@ -15,4 +15,5 @@
 .idea/
 bin/
 dependency-cache/
-scratch/
+.DS_Store
+artifactory/
