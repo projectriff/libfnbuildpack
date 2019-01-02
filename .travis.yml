@@ -1,6 +1,9 @@
 language: go
 go:
   - '1.11.4'
+cache:
+  directories:
+  - $GOPATH/pkg/mod
 install: true
 script: GO111MODULE=on make build
 deploy:
