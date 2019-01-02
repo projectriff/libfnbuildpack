@@ -19,7 +19,7 @@ request=$(
         -H "Travis-API-Version: 3" \
         -H "Authorization: token ${TRAVIS_API_TOKEN}" \
         -d "$body" \
-        https://api.travis-ci.org/repo/projectriff%2Friff-buildpack-group/requests
+        https://api.travis-ci.com/repo/projectriff%2Friff-buildpack-group/requests
 )
 request_id=`echo $request | jq '.request.id'`
 sleep 5
@@ -28,8 +28,8 @@ request=$(
         -H "Accept: application/json" \
         -H "Travis-API-Version: 3" \
         -H "Authorization: token ${TRAVIS_API_TOKEN}" \
-        https://api.travis-ci.org/repo/projectriff%2Friff-buildpack-group/request/${request_id}
+        https://api.travis-ci.com/repo/projectriff%2Friff-buildpack-group/request/${request_id}
 )
 
 echo "Triggered a new riff-buildpack-group build"
-echo -e "View results at https://travis-ci.org/projectriff/riff-buildpack-group/builds/`echo $request | jq -r '.builds[0].id'`"
+echo -e "View results at https://travis-ci.com/projectriff/riff-buildpack-group/builds/`echo $request | jq -r '.builds[0].id'`"
