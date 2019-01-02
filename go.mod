@@ -10,3 +10,6 @@ require (
 	github.com/cloudfoundry/openjdk-buildpack v0.0.0-20181025171903-b8cc3b233d17
 	github.com/sclevine/spec v1.0.0
 )
+
+// TODO delete this line once we've updated libbuildpack
+replace bou.ke/monkey v1.0.1 => github.com/bouk/monkey v1.0.0
