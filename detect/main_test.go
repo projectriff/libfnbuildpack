@@ -58,7 +58,6 @@ func TestDetect(t *testing.T) {
 
 			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
 				jre.Dependency: buildplan.Dependency{
-					Version:  "1.*",
 					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
 				},
 				java.Dependency: buildplan.Dependency{
@@ -134,7 +133,6 @@ override = "java"`)
 
 			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
 				jre.Dependency: buildplan.Dependency{
-					Version:  "1.*",
 					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
 				},
 				java.Dependency: buildplan.Dependency{

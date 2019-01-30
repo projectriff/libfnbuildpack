@@ -24,6 +24,7 @@ import (
 	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 	"github.com/projectriff/riff-buildpack/metadata"
@@ -58,15 +59,14 @@ type RiffCommandInvoker struct {
 	functionLayer layers.Layer
 }
 
-func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
-	plans := buildplan.BuildPlan{
-		Dependency: buildplan.Dependency{
-			Metadata: buildplan.Metadata{
-				Command: metadata.Artifact,
-			},
-		},
+func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
+	r := detect.BuildPlan[Dependency]
+	if r.Metadata == nil {
+		r.Metadata = buildplan.Metadata{}
 	}
-	return plans
+	r.Metadata[Command] = metadata.Artifact
+
+	return buildplan.BuildPlan{Dependency: r}
 }
 
 // Contribute makes the contribution to the launch layer

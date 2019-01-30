@@ -109,11 +109,11 @@ func d(detect detect.Detect) (int, error) {
 
 	switch detected[0] {
 	case "java":
-		return detect.Pass(java.BuildPlanContribution(metadata))
+		return detect.Pass(java.BuildPlanContribution(detect, metadata))
 	case "node":
-		return detect.Pass(node.BuildPlanContribution(metadata))
+		return detect.Pass(node.BuildPlanContribution(detect, metadata))
 	case "command":
-		return detect.Pass(command.BuildPlanContribution(metadata))
+		return detect.Pass(command.BuildPlanContribution(detect, metadata))
 	default:
 		return detect.Error(Error_UnsupportedLanguage), fmt.Errorf("unsupported language: %v", detected[0])
 	}

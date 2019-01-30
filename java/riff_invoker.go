@@ -23,6 +23,7 @@ import (
 	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 	"github.com/cloudfoundry/openjdk-buildpack/jre"
@@ -81,17 +82,20 @@ func (r RiffInvoker) command(destination string) string {
 }
 
 // BuildPlanContribution returns the BuildPlan with requirements for the invoker
-func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
-	return buildplan.BuildPlan{
-		jre.Dependency: buildplan.Dependency{
-			Metadata: buildplan.Metadata{jre.LaunchContribution: true},
-			Version:  "1.*",
-		},
-		Dependency: buildplan.Dependency{
-			Metadata: buildplan.Metadata{Handler: metadata.Handler,
-			},
-		},
+func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
+	j := detect.BuildPlan[jre.Dependency]
+	if j.Metadata == nil {
+		j.Metadata = buildplan.Metadata{}
 	}
+	j.Metadata[jre.LaunchContribution] = true
+
+	r := detect.BuildPlan[Dependency]
+	if r.Metadata == nil {
+		r.Metadata = buildplan.Metadata{}
+	}
+	r.Metadata[Handler] = metadata.Handler
+
+	return buildplan.BuildPlan{jre.Dependency: j, Dependency: r}
 }
 
 // NewRiffInvoker creates a new RiffInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,

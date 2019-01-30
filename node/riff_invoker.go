@@ -26,6 +26,7 @@ import (
 	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 	"github.com/cloudfoundry/nodejs-cnb/node"
@@ -59,17 +60,21 @@ type RiffNodeInvoker struct {
 	functionLayer layers.Layer
 }
 
-func BuildPlanContribution(metadata metadata.Metadata) buildplan.BuildPlan {
-	return buildplan.BuildPlan{
-		// Ask the node BP to contribute a node runtime
-		node.Dependency: buildplan.Dependency{
-			Metadata: buildplan.Metadata{"launch": true, "build": true},
-		},
-		// Ask for the node invoker
-		Dependency: buildplan.Dependency{
-			Metadata: buildplan.Metadata{FunctionArtifact: metadata.Artifact},
-		},
+func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
+	n := detect.BuildPlan[node.Dependency]
+	if n.Metadata == nil {
+		n.Metadata = buildplan.Metadata{}
 	}
+	n.Metadata["launch"] = true
+	n.Metadata["build"] = true
+
+	r := detect.BuildPlan[Dependency]
+	if r.Metadata == nil {
+		r.Metadata = buildplan.Metadata{}
+	}
+	r.Metadata[FunctionArtifact] = metadata.Artifact
+
+	return buildplan.BuildPlan{node.Dependency: n, Dependency: r}
 }
 
 // Contribute expands the node invoker tgz and creates launch configurations that run "node server.js"

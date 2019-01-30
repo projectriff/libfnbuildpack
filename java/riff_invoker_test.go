@@ -33,68 +33,78 @@ import (
 )
 
 func TestRiffInvoker(t *testing.T) {
-	spec.Run(t, "RiffInvoker", func(t *testing.T, _ spec.G, it spec.S) {
+	spec.Run(t, "RiffInvoker", func(t *testing.T, when spec.G, it spec.S) {
 
 		g := NewGomegaWithT(t)
 
-		var f *test.BuildFactory
+		when("Detect", func() {
 
-		it.Before(func() {
-			f = test.NewBuildFactory(t)
-			f.AddDependency(java.Dependency, filepath.Join("testdata", "stub-invoker.jar"))
+			var f *test.DetectFactory
+
+			it.Before(func() {
+				f = test.NewDetectFactory(t)
+			})
+
+			it("contains openjdk-jre and riff-invoker-java in build plan", func() {
+				g.Expect(java.BuildPlanContribution(f.Detect, metadata.Metadata{Handler: "test-handler"})).To(Equal(buildplan.BuildPlan{
+					java.Dependency: buildplan.Dependency{
+						Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+					},
+					jre.Dependency: buildplan.Dependency{
+						Metadata: buildplan.Metadata{jre.LaunchContribution: true},
+					},
+				}))
+			})
 		})
 
-		it("contains openjdk-jre and riff-invoker-java in build plan", func() {
-			g.Expect(java.BuildPlanContribution(metadata.Metadata{Handler: "test-handler"})).To(Equal(buildplan.BuildPlan{
-				java.Dependency: buildplan.Dependency{
+		when("Build", func() {
+			var f *test.BuildFactory
+
+			it.Before(func() {
+				f = test.NewBuildFactory(t)
+				f.AddDependency(java.Dependency, filepath.Join("testdata", "stub-invoker.jar"))
+			})
+
+			it("returns true if build plan exists", func() {
+				f.AddBuildPlan(java.Dependency, buildplan.Dependency{
 					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
-				},
-				jre.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
-					Version:  "1.*",
-				},
-			}))
-		})
+				})
 
-		it("returns true if build plan exists", func() {
-			f.AddBuildPlan(java.Dependency, buildplan.Dependency{
-				Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+				_, ok, err := java.NewRiffInvoker(f.Build)
+				g.Expect(ok).To(BeTrue())
+				g.Expect(err).NotTo(HaveOccurred())
 			})
 
-			_, ok, err := java.NewRiffInvoker(f.Build)
-			g.Expect(ok).To(BeTrue())
-			g.Expect(err).NotTo(HaveOccurred())
-		})
-
-		it("returns false if build plan does not exist", func() {
-			_, ok, err := java.NewRiffInvoker(f.Build)
-			g.Expect(ok).To(BeFalse())
-			g.Expect(err).NotTo(HaveOccurred())
-		})
-
-		it("contributes invoker", func() {
-			f.AddBuildPlan(java.Dependency, buildplan.Dependency{
-				Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+			it("returns false if build plan does not exist", func() {
+				_, ok, err := java.NewRiffInvoker(f.Build)
+				g.Expect(ok).To(BeFalse())
+				g.Expect(err).NotTo(HaveOccurred())
 			})
 
-			r, _, err := java.NewRiffInvoker(f.Build)
-			g.Expect(err).NotTo(HaveOccurred())
+			it("contributes invoker", func() {
+				f.AddBuildPlan(java.Dependency, buildplan.Dependency{
+					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
+				})
 
-			g.Expect(r.Contribute()).To(Succeed())
+				r, _, err := java.NewRiffInvoker(f.Build)
+				g.Expect(err).NotTo(HaveOccurred())
 
-			layer := f.Build.Layers.Layer("riff-invoker-java")
-			g.Expect(layer).To(test.HaveLayerMetadata(false, false, true))
-			g.Expect(filepath.Join(layer.Root, "stub-invoker.jar")).To(BeARegularFile())
+				g.Expect(r.Contribute()).To(Succeed())
 
-			command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
-				filepath.Join(layer.Root, "stub-invoker.jar"), f.Build.Application.Root)
+				layer := f.Build.Layers.Layer("riff-invoker-java")
+				g.Expect(layer).To(test.HaveLayerMetadata(false, false, true))
+				g.Expect(filepath.Join(layer.Root, "stub-invoker.jar")).To(BeARegularFile())
 
-			g.Expect(f.Build.Layers).To(test.HaveLaunchMetadata(layers.Metadata{
-				Processes: layers.Processes{
-					layers.Process{Type: "web", Command: command},
-					layers.Process{Type: "function", Command: command},
-				},
-			}))
+				command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
+					filepath.Join(layer.Root, "stub-invoker.jar"), f.Build.Application.Root)
+
+				g.Expect(f.Build.Layers).To(test.HaveLaunchMetadata(layers.Metadata{
+					Processes: layers.Processes{
+						layers.Process{Type: "web", Command: command},
+						layers.Process{Type: "function", Command: command},
+					},
+				}))
+			})
 		})
 	}, spec.Report(report.Terminal{}))
 }
