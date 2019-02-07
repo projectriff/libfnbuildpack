@@ -37,8 +37,8 @@ const (
 	Handler = "handler"
 )
 
-// RiffInvoker represents the Java invoker contributed by the buildpack.
-type RiffInvoker struct {
+// RiffJavaInvoker represents the Java invoker contributed by the buildpack.
+type RiffJavaInvoker struct {
 	application application.Application
 	handler     string
 	layer       layers.DependencyLayer
@@ -46,7 +46,7 @@ type RiffInvoker struct {
 }
 
 // Contribute makes the contribution to the launch layer
-func (r RiffInvoker) Contribute() error {
+func (r RiffJavaInvoker) Contribute() error {
 	if err := r.layer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		destination := filepath.Join(layer.Root, layer.ArtifactName())
 		layer.Logger.SubsequentLine("Copying to %s", destination)
@@ -65,13 +65,13 @@ func (r RiffInvoker) Contribute() error {
 	})
 }
 
-// String makes RiffInvoker satisfy the Stringer interface.
-func (r RiffInvoker) String() string {
-	return fmt.Sprintf("RiffInvoker{ application: %s, handler: %s, layer: %s, layers :%s }",
+// String makes RiffJavaInvoker satisfy the Stringer interface.
+func (r RiffJavaInvoker) String() string {
+	return fmt.Sprintf("RiffJavaInvoker{ application: %s, handler: %s, layer: %s, layers :%s }",
 		r.application, r.handler, r.layer, r.layers)
 }
 
-func (r RiffInvoker) command(destination string) string {
+func (r RiffJavaInvoker) command(destination string) string {
 	if len(r.handler) > 0 {
 		return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=%s'",
 			destination, r.application.Root, r.handler)
@@ -98,30 +98,30 @@ func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) bui
 	return buildplan.BuildPlan{jre.Dependency: j, Dependency: r}
 }
 
-// NewRiffInvoker creates a new RiffInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,
+// NewJavaInvoker creates a new RiffJavaInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,
 // otherwise false.
-func NewRiffInvoker(build build.Build) (RiffInvoker, bool, error) {
+func NewJavaInvoker(build build.Build) (RiffJavaInvoker, bool, error) {
 	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
-		return RiffInvoker{}, false, nil
+		return RiffJavaInvoker{}, false, nil
 	}
 
 	deps, err := build.Buildpack.Dependencies()
 	if err != nil {
-		return RiffInvoker{}, false, err
+		return RiffJavaInvoker{}, false, err
 	}
 
 	dep, err := deps.Best(Dependency, bp.Version, build.Stack)
 	if err != nil {
-		return RiffInvoker{}, false, err
+		return RiffJavaInvoker{}, false, err
 	}
 
 	handler, ok := bp.Metadata[Handler].(string)
 	if !ok {
-		return RiffInvoker{}, false, fmt.Errorf("handler metadata of incorrect type: %v", bp.Metadata[Handler])
+		return RiffJavaInvoker{}, false, fmt.Errorf("handler metadata of incorrect type: %v", bp.Metadata[Handler])
 	}
 
-	return RiffInvoker{
+	return RiffJavaInvoker{
 		build.Application,
 		handler,
 		build.Layers.DependencyLayer(dep),

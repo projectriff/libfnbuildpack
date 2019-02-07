@@ -45,7 +45,7 @@ func main() {
 func b(build build.Build) (int, error) {
 	build.Logger.FirstLine(build.Logger.PrettyIdentity(build.Buildpack))
 
-	if invoker, ok, err := java.NewRiffInvoker(build); err != nil {
+	if invoker, ok, err := java.NewJavaInvoker(build); err != nil {
 		return build.Failure(102), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {

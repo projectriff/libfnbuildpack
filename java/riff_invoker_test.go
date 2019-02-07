@@ -33,7 +33,7 @@ import (
 )
 
 func TestRiffInvoker(t *testing.T) {
-	spec.Run(t, "RiffInvoker", func(t *testing.T, when spec.G, it spec.S) {
+	spec.Run(t, "RiffJavaInvoker", func(t *testing.T, when spec.G, it spec.S) {
 
 		g := NewGomegaWithT(t)
 
@@ -70,13 +70,13 @@ func TestRiffInvoker(t *testing.T) {
 					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
 				})
 
-				_, ok, err := java.NewRiffInvoker(f.Build)
+				_, ok, err := java.NewJavaInvoker(f.Build)
 				g.Expect(ok).To(BeTrue())
 				g.Expect(err).NotTo(HaveOccurred())
 			})
 
 			it("returns false if build plan does not exist", func() {
-				_, ok, err := java.NewRiffInvoker(f.Build)
+				_, ok, err := java.NewJavaInvoker(f.Build)
 				g.Expect(ok).To(BeFalse())
 				g.Expect(err).NotTo(HaveOccurred())
 			})
@@ -86,7 +86,7 @@ func TestRiffInvoker(t *testing.T) {
 					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
 				})
 
-				r, _, err := java.NewRiffInvoker(f.Build)
+				r, _, err := java.NewJavaInvoker(f.Build)
 				g.Expect(err).NotTo(HaveOccurred())
 
 				g.Expect(r.Contribute()).To(Succeed())
