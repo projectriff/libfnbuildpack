@@ -51,7 +51,7 @@ type RiffJavaInvoker struct {
 	// A dedicated layer for the java invoker. Cacheable once unzipped.
 	invokerLayer layers.DependencyLayer
 
-	// A dedicated layer for the function locatioon. Not cacheable as it changes with the value of handler.
+	// A dedicated layer for the function location. Not cacheable as it changes with the value of handler.
 	functionLayer layers.Layer
 }
 
