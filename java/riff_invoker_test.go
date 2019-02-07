@@ -93,10 +93,10 @@ func TestRiffInvoker(t *testing.T) {
 
 				layer := f.Build.Layers.Layer("riff-invoker-java")
 				g.Expect(layer).To(test.HaveLayerMetadata(false, false, true))
-				g.Expect(filepath.Join(layer.Root, "stub-invoker.jar")).To(BeARegularFile())
+				g.Expect(filepath.Join(layer.Root, "META-INF", "MANIFEST.MF")).To(BeARegularFile())
 
-				command := fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=test-handler'",
-					filepath.Join(layer.Root, "stub-invoker.jar"), f.Build.Application.Root)
+				command := fmt.Sprintf("java -cp %s $JAVA_OPTS org.springframework.boot.loader.JarLauncher",
+					layer.Root)
 
 				g.Expect(f.Build.Layers).To(test.HaveLaunchMetadata(layers.Metadata{
 					Processes: layers.Processes{
@@ -104,6 +104,9 @@ func TestRiffInvoker(t *testing.T) {
 						layers.Process{Type: "function", Command: command},
 					},
 				}))
+
+				functionLayer := f.Build.Layers.Layer("function")
+				g.Expect(functionLayer).To(test.HaveOverrideLaunchEnvironment("FUNCTION_URI", fmt.Sprintf("file://%s?handler=test-handler", f.Build.Application.Root)))
 			})
 		})
 	}, spec.Report(report.Terminal{}))
