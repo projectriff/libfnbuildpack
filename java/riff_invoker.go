@@ -18,8 +18,6 @@ package java
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
@@ -35,27 +33,48 @@ const (
 	Dependency = "riff-invoker-java"
 	// Handler is the key identifying the riff handler metadata in the build plan
 	Handler = "handler"
+	// invokerMainClass is the class name to run
+	invokerMainClass = "org.springframework.boot.loader.JarLauncher"
 )
 
 // RiffJavaInvoker represents the Java invoker contributed by the buildpack.
 type RiffJavaInvoker struct {
+	// A reference to the user function.
 	application application.Application
+
+	// Optional reference to the java class implementing the function.
 	handler     string
-	layer       layers.DependencyLayer
+
+	// Provides access to the launch layers, used to craft the process commands.
 	layers      layers.Layers
+
+	// A dedicated layer for the java invoker. Cacheable once unzipped.
+	invokerLayer layers.DependencyLayer
+
+	// A dedicated layer for the function location. Not cacheable as it changes with the value of handler.
+	functionLayer layers.Layer
 }
 
 // Contribute makes the contribution to the launch layer
 func (r RiffJavaInvoker) Contribute() error {
-	if err := r.layer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
-		destination := filepath.Join(layer.Root, layer.ArtifactName())
-		layer.Logger.SubsequentLine("Copying to %s", destination)
-		return helper.CopyFile(artifact, destination)
+	if err := r.invokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
+		layer.Logger.SubsequentLine("Unzipping java invoker to %s", layer.Root)
+		return helper.ExtractZip(artifact, layer.Root, 0)
 	}, layers.Launch); err != nil {
 		return err
 	}
 
-	command := r.command(filepath.Join(r.layer.Root, r.layer.ArtifactName()))
+	if err := r.functionLayer.Contribute(marker{"Java", r.handler}, func(layer layers.Layer) error {
+		if len(r.handler) > 0 {
+			return layer.OverrideLaunchEnv("FUNCTION_URI", fmt.Sprintf("file://%s?handler=%s", r.application.Root, r.handler))
+		} else {
+			return layer.OverrideLaunchEnv("FUNCTION_URI", fmt.Sprintf("file://%s", r.application.Root))
+		}
+	}, layers.Launch); err != nil {
+		return err
+	}
+
+	command := fmt.Sprintf("java -cp %s $JAVA_OPTS %s", r.invokerLayer.Root, invokerMainClass)
 
 	return r.layers.WriteMetadata(layers.Metadata{
 		Processes: layers.Processes{
@@ -68,7 +87,7 @@ func (r RiffJavaInvoker) Contribute() error {
 // String makes RiffJavaInvoker satisfy the Stringer interface.
 func (r RiffJavaInvoker) String() string {
 	return fmt.Sprintf("RiffJavaInvoker{ application: %s, handler: %s, layer: %s, layers :%s }",
-		r.application, r.handler, r.layer, r.layers)
+		r.application, r.handler, r.invokerLayer, r.layers)
 }
 
 func (r RiffJavaInvoker) command(destination string) string {
@@ -122,9 +141,20 @@ func NewJavaInvoker(build build.Build) (RiffJavaInvoker, bool, error) {
 	}
 
 	return RiffJavaInvoker{
-		build.Application,
-		handler,
-		build.Layers.DependencyLayer(dep),
-		build.Layers,
+		application:  build.Application,
+		handler:      handler,
+		layers:       build.Layers,
+		invokerLayer: build.Layers.DependencyLayer(dep),
+		functionLayer:build.Layers.Layer("function"),
 	}, true, nil
+}
+
+
+type marker struct {
+	Language string `toml:"language"`
+	Handler string `toml:"handler"`
+}
+
+func (m marker) Identity() (string, string) {
+	return m.Language, m.Handler
 }
