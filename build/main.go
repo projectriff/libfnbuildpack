@@ -48,25 +48,25 @@ func b(build build.Build) (int, error) {
 	if invoker, ok, err := java.NewRiffInvoker(build); err != nil {
 		return build.Failure(102), err
 	} else if ok {
-		if err = invoker.Contribute(); err != nil {
+		if err = java.Contribute(invoker); err != nil {
 			return build.Failure(103), err
 		}
 		return build.Success(buildplan.BuildPlan{})
 	}
 
-	if invoker, ok, err := node.NewNodeInvoker(build); err != nil {
+	if invoker, ok, err := node.NewRiffInvoker(build); err != nil {
 		return build.Failure(105), err
 	} else if ok {
-		if err = invoker.Contribute(); err != nil {
+		if err = node.Contribute(invoker); err != nil {
 			return build.Failure(106), err
 		}
 		return build.Success(buildplan.BuildPlan{})
 	}
 
-	if invoker, ok, err := command.NewCommandInvoker(build); err != nil {
+	if invoker, ok, err := command.NewRiffInvoker(build); err != nil {
 		return build.Failure(102), err
 	} else if ok {
-		if err = invoker.Contribute(); err != nil {
+		if err = command.Contribute(invoker); err != nil {
 			return build.Failure(103), err
 		}
 		return build.Success(buildplan.BuildPlan{})

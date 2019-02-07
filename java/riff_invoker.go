@@ -18,9 +18,9 @@ package java
 
 import (
 	"fmt"
+	. "github.com/projectriff/riff-buildpack/plugins"
 	"path/filepath"
 
-	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
@@ -37,17 +37,9 @@ const (
 	Handler = "handler"
 )
 
-// RiffInvoker represents the Java invoker contributed by the buildpack.
-type RiffInvoker struct {
-	application application.Application
-	handler     string
-	layer       layers.DependencyLayer
-	layers      layers.Layers
-}
-
 // Contribute makes the contribution to the launch layer
-func (r RiffInvoker) Contribute() error {
-	if err := r.layer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
+func Contribute(r RiffInvoker) error {
+	if err := r.InvokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		destination := filepath.Join(layer.Root, layer.ArtifactName())
 		layer.Logger.SubsequentLine("Copying to %s", destination)
 		return helper.CopyFile(artifact, destination)
@@ -55,9 +47,9 @@ func (r RiffInvoker) Contribute() error {
 		return err
 	}
 
-	command := r.command(filepath.Join(r.layer.Root, r.layer.ArtifactName()))
+	command := command(r, filepath.Join(r.InvokerLayer.Root, r.InvokerLayer.ArtifactName()))
 
-	return r.layers.WriteMetadata(layers.Metadata{
+	return r.Layers.WriteMetadata(layers.Metadata{
 		Processes: layers.Processes{
 			layers.Process{Type: "web", Command: command},
 			layers.Process{Type: "function", Command: command},
@@ -65,19 +57,13 @@ func (r RiffInvoker) Contribute() error {
 	})
 }
 
-// String makes RiffInvoker satisfy the Stringer interface.
-func (r RiffInvoker) String() string {
-	return fmt.Sprintf("RiffInvoker{ application: %s, handler: %s, layer: %s, layers :%s }",
-		r.application, r.handler, r.layer, r.layers)
-}
-
-func (r RiffInvoker) command(destination string) string {
-	if len(r.handler) > 0 {
+func command(r RiffInvoker, destination string) string {
+	if len(r.Handler) > 0 {
 		return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s?handler=%s'",
-			destination, r.application.Root, r.handler)
+			destination, r.Application.Root, r.Handler)
 	} else {
 		return fmt.Sprintf("java -jar %s $JAVA_OPTS --function.uri='file://%s'",
-			destination, r.application.Root)
+			destination, r.Application.Root)
 	}
 }
 
@@ -122,9 +108,9 @@ func NewRiffInvoker(build build.Build) (RiffInvoker, bool, error) {
 	}
 
 	return RiffInvoker{
-		build.Application,
-		handler,
-		build.Layers.DependencyLayer(dep),
-		build.Layers,
+		Application:  build.Application,
+		Handler:      handler,
+		InvokerLayer: build.Layers.DependencyLayer(dep),
+		Layers:       build.Layers,
 	}, true, nil
 }

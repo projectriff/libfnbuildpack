@@ -19,9 +19,9 @@ package command
 
 import (
 	"fmt"
+	. "github.com/projectriff/riff-buildpack/plugins"
 	"path/filepath"
 
-	"github.com/buildpack/libbuildpack/application"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
@@ -41,24 +41,6 @@ const (
 	functionInvokerExecutable = "command-function-invoker"
 )
 
-// RiffCommandInvoker represents the Command invoker contributed by the buildpack.
-type RiffCommandInvoker struct {
-	// A reference to the user function source tree.
-	application application.Application
-
-	// The function executable. Must have exec permissions.
-	executable string
-
-	// Provides access to the launch layers, used to craft the process commands.
-	layers layers.Layers
-
-	// A dedicated layer for the command invoker itself. Cacheable.
-	invokerLayer layers.DependencyLayer
-
-	// A dedicated layer for the function location. Not cacheable, as it changes with the value of executable.
-	functionLayer layers.Layer
-}
-
 func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
 	r := detect.BuildPlan[Dependency]
 	if r.Metadata == nil {
@@ -70,23 +52,23 @@ func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) bui
 }
 
 // Contribute makes the contribution to the launch layer
-func (r RiffCommandInvoker) Contribute() error {
-	if err := r.invokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
+func Contribute(r RiffInvoker) error {
+	if err := r.InvokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
 		layer.Logger.SubsequentLine("Expanding %s to %s", artifact, layer.Root)
 		return helper.ExtractTarGz(artifact, layer.Root, 0)
 	}, layers.Cache, layers.Launch); err != nil {
 		return err
 	}
 
-	if err := r.functionLayer.Contribute(marker{"Command", r.executable}, func(layer layers.Layer) error {
-		return layer.OverrideLaunchEnv("FUNCTION_URI", filepath.Join(r.application.Root, r.executable))
+	if err := r.FunctionLayer.Contribute(marker{"Command", r.Handler}, func(layer layers.Layer) error {
+		return layer.OverrideLaunchEnv("FUNCTION_URI", filepath.Join(r.Application.Root, r.Handler))
 	}, layers.Launch); err != nil {
 		return err
 	}
 
-	command := filepath.Join(r.invokerLayer.Root, functionInvokerExecutable)
+	command := filepath.Join(r.InvokerLayer.Root, functionInvokerExecutable)
 
-	return r.layers.WriteMetadata(layers.Metadata{
+	return r.Layers.WriteMetadata(layers.Metadata{
 		Processes: layers.Processes{
 			layers.Process{Type: "web", Command: command},
 			layers.Process{Type: "function", Command: command},
@@ -94,33 +76,33 @@ func (r RiffCommandInvoker) Contribute() error {
 	})
 }
 
-func NewCommandInvoker(build build.Build) (RiffCommandInvoker, bool, error) {
+func NewRiffInvoker(build build.Build) (RiffInvoker, bool, error) {
 	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
-		return RiffCommandInvoker{}, false, nil
+		return RiffInvoker{}, false, nil
 	}
 
 	deps, err := build.Buildpack.Dependencies()
 	if err != nil {
-		return RiffCommandInvoker{}, false, err
+		return RiffInvoker{}, false, err
 	}
 
 	dep, err := deps.Best(Dependency, bp.Version, build.Stack)
 	if err != nil {
-		return RiffCommandInvoker{}, false, err
+		return RiffInvoker{}, false, err
 	}
 
 	exec, ok := bp.Metadata[Command].(string)
 	if !ok {
-		return RiffCommandInvoker{}, false, fmt.Errorf("command metadata of incorrect type: %v", bp.Metadata[Command])
+		return RiffInvoker{}, false, fmt.Errorf("command metadata of incorrect type: %v", bp.Metadata[Command])
 	}
 
-	return RiffCommandInvoker{
-		application:   build.Application,
-		executable:    exec,
-		layers:        build.Layers,
-		invokerLayer:  build.Layers.DependencyLayer(dep),
-		functionLayer: build.Layers.Layer("function"),
+	return RiffInvoker{
+		Application:   build.Application,
+		Handler:       exec,
+		Layers:        build.Layers,
+		InvokerLayer:  build.Layers.DependencyLayer(dep),
+		FunctionLayer: build.Layers.Layer("function"),
 	}, true, nil
 }
 

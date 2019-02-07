@@ -89,7 +89,7 @@ func TestRiffInvoker(t *testing.T) {
 				r, _, err := java.NewRiffInvoker(f.Build)
 				g.Expect(err).NotTo(HaveOccurred())
 
-				g.Expect(r.Contribute()).To(Succeed())
+				g.Expect(java.Contribute(r)).To(Succeed())
 
 				layer := f.Build.Layers.Layer("riff-invoker-java")
 				g.Expect(layer).To(test.HaveLayerMetadata(false, false, true))
