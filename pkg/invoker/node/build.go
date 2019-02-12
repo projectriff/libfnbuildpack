@@ -18,24 +18,25 @@
 package node
 
 import (
+	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
-	"github.com/cloudfoundry/libcfbuildpack/helper"
-	"github.com/projectriff/riff-buildpack/metadata"
-
-	"path/filepath"
+	"github.com/cloudfoundry/nodejs-cnb/node"
+	"github.com/projectriff/riff-buildpack/pkg/metadata"
 )
 
-// DetectNode answers true if the `artifact` path is set, the file exists and ends in ".js"
-func DetectNode(detect detect.Detect, metadata metadata.Metadata) (bool, error) {
-	if metadata.Artifact == "" {
-		return false, nil
+func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
+	n := detect.BuildPlan[node.Dependency]
+	if n.Metadata == nil {
+		n.Metadata = buildplan.Metadata{}
 	}
+	n.Metadata["launch"] = true
+	n.Metadata["build"] = true
 
-	path := filepath.Join(detect.Application.Root, metadata.Artifact)
-
-	ok, err := helper.FileExists(path)
-	if err != nil || !ok {
-		return false, err
+	r := detect.BuildPlan[Dependency]
+	if r.Metadata == nil {
+		r.Metadata = buildplan.Metadata{}
 	}
-	return filepath.Ext(path) == ".js", nil
+	r.Metadata[FunctionArtifact] = metadata.Artifact
+
+	return buildplan.BuildPlan{node.Dependency: n, Dependency: r}
 }

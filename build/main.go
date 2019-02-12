@@ -22,9 +22,7 @@ import (
 
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
-	"github.com/projectriff/riff-buildpack/command"
-	"github.com/projectriff/riff-buildpack/java"
-	"github.com/projectriff/riff-buildpack/node"
+	buildpack "github.com/projectriff/riff-buildpack/pkg"
 )
 
 func main() {
@@ -45,31 +43,15 @@ func main() {
 func b(build build.Build) (int, error) {
 	build.Logger.FirstLine(build.Logger.PrettyIdentity(build.Buildpack))
 
-	if invoker, ok, err := java.NewJavaInvoker(build); err != nil {
-		return build.Failure(102), err
-	} else if ok {
-		if err = invoker.Contribute(); err != nil {
-			return build.Failure(103), err
+	for _, rbp := range buildpack.RiffBuildpackContributions {
+		if invoker, ok, err := rbp.Invoker(build); err != nil {
+			return build.Failure(102), err
+		} else if ok {
+			if err = invoker.Contribute(); err != nil {
+				return build.Failure(103), err
+			}
+			return build.Success(buildplan.BuildPlan{})
 		}
-		return build.Success(buildplan.BuildPlan{})
-	}
-
-	if invoker, ok, err := node.NewNodeInvoker(build); err != nil {
-		return build.Failure(105), err
-	} else if ok {
-		if err = invoker.Contribute(); err != nil {
-			return build.Failure(106), err
-		}
-		return build.Success(buildplan.BuildPlan{})
-	}
-
-	if invoker, ok, err := command.NewCommandInvoker(build); err != nil {
-		return build.Failure(102), err
-	} else if ok {
-		if err = invoker.Contribute(); err != nil {
-			return build.Failure(103), err
-		}
-		return build.Success(buildplan.BuildPlan{})
 	}
 
 	build.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")

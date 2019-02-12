@@ -24,13 +24,10 @@ import (
 	"path/filepath"
 
 	"github.com/buildpack/libbuildpack/application"
-	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
-	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
-	"github.com/cloudfoundry/nodejs-cnb/node"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/invoker"
 )
 
 const (
@@ -58,23 +55,6 @@ type RiffNodeInvoker struct {
 
 	// A dedicated layer for the function location. Not cacheable, as it changes with the value of functionJS.
 	functionLayer layers.Layer
-}
-
-func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
-	n := detect.BuildPlan[node.Dependency]
-	if n.Metadata == nil {
-		n.Metadata = buildplan.Metadata{}
-	}
-	n.Metadata["launch"] = true
-	n.Metadata["build"] = true
-
-	r := detect.BuildPlan[Dependency]
-	if r.Metadata == nil {
-		r.Metadata = buildplan.Metadata{}
-	}
-	r.Metadata[FunctionArtifact] = metadata.Artifact
-
-	return buildplan.BuildPlan{node.Dependency: n, Dependency: r}
 }
 
 // Contribute expands the node invoker tgz and creates launch configurations that run "node server.js"
@@ -121,7 +101,7 @@ func (r RiffNodeInvoker) Contribute() error {
 	})
 }
 
-func NewNodeInvoker(build build.Build) (RiffNodeInvoker, bool, error) {
+func NewNodeInvoker(build build.Build) (invoker.RiffInvoker, bool, error) {
 	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffNodeInvoker{}, false, nil

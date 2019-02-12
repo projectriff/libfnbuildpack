@@ -22,12 +22,10 @@ import (
 	"path/filepath"
 
 	"github.com/buildpack/libbuildpack/application"
-	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
-	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/invoker"
 )
 
 const (
@@ -59,16 +57,6 @@ type RiffCommandInvoker struct {
 	functionLayer layers.Layer
 }
 
-func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
-	r := detect.BuildPlan[Dependency]
-	if r.Metadata == nil {
-		r.Metadata = buildplan.Metadata{}
-	}
-	r.Metadata[Command] = metadata.Artifact
-
-	return buildplan.BuildPlan{Dependency: r}
-}
-
 // Contribute makes the contribution to the launch layer
 func (r RiffCommandInvoker) Contribute() error {
 	if err := r.invokerLayer.Contribute(func(artifact string, layer layers.DependencyLayer) error {
@@ -94,7 +82,7 @@ func (r RiffCommandInvoker) Contribute() error {
 	})
 }
 
-func NewCommandInvoker(build build.Build) (RiffCommandInvoker, bool, error) {
+func NewCommandInvoker(build build.Build) (invoker.RiffInvoker, bool, error) {
 	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffCommandInvoker{}, false, nil

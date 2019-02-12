@@ -28,9 +28,10 @@ import (
 	"github.com/cloudfoundry/npm-cnb/modules"
 	"github.com/cloudfoundry/openjdk-buildpack/jre"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/command"
-	"github.com/projectriff/riff-buildpack/java"
-	"github.com/projectriff/riff-buildpack/node"
+	"github.com/projectriff/riff-buildpack/pkg/invoker"
+	"github.com/projectriff/riff-buildpack/pkg/invoker/command"
+	"github.com/projectriff/riff-buildpack/pkg/invoker/java"
+	"github.com/projectriff/riff-buildpack/pkg/invoker/node"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
@@ -118,7 +119,7 @@ func TestDetect(t *testing.T) {
 			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "fn.sh"`)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(Error_DetectAmbiguity))
+			g.Expect(code).To(Equal(invoker.Error_DetectAmbiguity))
 			g.Expect(err).To(HaveOccurred())
 		})
 
@@ -145,7 +146,7 @@ override = "java"`)
 			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `handler = "test-handler"`)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(Error_DetectedNone))
+			g.Expect(code).To(Equal(invoker.Error_DetectedNone))
 			g.Expect(err).To(HaveOccurred())
 		})
 	}, spec.Report(report.Terminal{}))

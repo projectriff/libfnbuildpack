@@ -26,8 +26,8 @@ import (
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	"github.com/cloudfoundry/openjdk-buildpack/jre"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/java"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/invoker/java"
+	"github.com/projectriff/riff-buildpack/pkg/metadata"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )

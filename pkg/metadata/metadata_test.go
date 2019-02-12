@@ -22,7 +22,7 @@ import (
 
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/metadata"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )

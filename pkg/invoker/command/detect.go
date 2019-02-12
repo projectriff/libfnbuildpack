@@ -23,7 +23,7 @@ import (
 
 	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/metadata"
 )
 
 func DetectCommand(detect detect.Detect, metadata metadata.Metadata) (bool, error) {

@@ -18,14 +18,12 @@ package java
 
 import (
 	"fmt"
+
 	"github.com/buildpack/libbuildpack/application"
-	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
-	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
-	"github.com/cloudfoundry/openjdk-buildpack/jre"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/pkg/invoker"
 )
 
 const (
@@ -43,10 +41,10 @@ type RiffJavaInvoker struct {
 	application application.Application
 
 	// Optional reference to the java class implementing the function.
-	handler     string
+	handler string
 
 	// Provides access to the launch layers, used to craft the process commands.
-	layers      layers.Layers
+	layers layers.Layers
 
 	// A dedicated layer for the java invoker. Cacheable once unzipped.
 	invokerLayer layers.DependencyLayer
@@ -100,26 +98,9 @@ func (r RiffJavaInvoker) command(destination string) string {
 	}
 }
 
-// BuildPlanContribution returns the BuildPlan with requirements for the invoker
-func BuildPlanContribution(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan {
-	j := detect.BuildPlan[jre.Dependency]
-	if j.Metadata == nil {
-		j.Metadata = buildplan.Metadata{}
-	}
-	j.Metadata[jre.LaunchContribution] = true
-
-	r := detect.BuildPlan[Dependency]
-	if r.Metadata == nil {
-		r.Metadata = buildplan.Metadata{}
-	}
-	r.Metadata[Handler] = metadata.Handler
-
-	return buildplan.BuildPlan{jre.Dependency: j, Dependency: r}
-}
-
 // NewJavaInvoker creates a new RiffJavaInvoker instance. OK is true if build plan contains "riff-invoker-java" dependency,
 // otherwise false.
-func NewJavaInvoker(build build.Build) (RiffJavaInvoker, bool, error) {
+func NewJavaInvoker(build build.Build) (invoker.RiffInvoker, bool, error) {
 	bp, ok := build.BuildPlan[Dependency]
 	if !ok {
 		return RiffJavaInvoker{}, false, nil
@@ -141,18 +122,17 @@ func NewJavaInvoker(build build.Build) (RiffJavaInvoker, bool, error) {
 	}
 
 	return RiffJavaInvoker{
-		application:  build.Application,
-		handler:      handler,
-		layers:       build.Layers,
-		invokerLayer: build.Layers.DependencyLayer(dep),
-		functionLayer:build.Layers.Layer("function"),
+		application:   build.Application,
+		handler:       handler,
+		layers:        build.Layers,
+		invokerLayer:  build.Layers.DependencyLayer(dep),
+		functionLayer: build.Layers.Layer("function"),
 	}, true, nil
 }
 
-
 type marker struct {
 	Language string `toml:"language"`
-	Handler string `toml:"handler"`
+	Handler  string `toml:"handler"`
 }
 
 func (m marker) Identity() (string, string) {
