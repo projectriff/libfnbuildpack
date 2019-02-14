@@ -20,42 +20,6 @@ version = "0.2.0-BUILD-SNAPSHOT"
 [[stacks]]
 id = "io.buildpacks.stacks.bionic"
 
-[[metadata.dependencies]]
-id      = "riff-invoker-java"
-name    = "riff Java Invoker"
-version = "0.1.4"
-uri     = "https://repo.spring.io/libs-milestone-local/io/projectriff/java-function-invoker/0.1.4/java-function-invoker-0.1.4-exec.jar"
-sha256  = "afdb65875c6e160571057083d063b5d506d3f4dff235abeebaa75f447bf02b66"
-stacks  = [ "io.buildpacks.stacks.bionic" ]
-
-  [[metadata.dependencies.licenses]]
-  type = "Apache-2.0"
-  uri  = "https://github.com/projectriff/java-function-invoker/blob/master/LICENSE"
-
-[[metadata.dependencies]]
-id      = "riff-invoker-command"
-name    = "riff Command Invoker"
-version = "0.0.8"
-uri     = "https://storage.googleapis.com/projectriff/command-function-invoker/command-function-invoker-linux-amd64-0.0.8.tgz"
-sha256  = "cf475eae3043cf7dc0818b5ccd70f99c9542d798160fa3965c8506787a70e8d3"
-stacks  = [ "io.buildpacks.stacks.bionic" ]
-
-  [[metadata.dependencies.licenses]]
-  type = "Apache-2.0"
-  uri  = "https://github.com/projectriff/command-function-invoker/blob/master/LICENSE"
-
-[[metadata.dependencies]]
-id      = "riff-invoker-node"
-name    = "riff Node Invoker"
-version = "0.1.0"
-uri     = "https://storage.googleapis.com/projectriff/node-function-invoker/releases/v0.1.0/node-function-invoker-0.1.0.tgz"
-sha256  = "8ca457e564574ead2f5e30c009e8124a6e7fe6a8ec17ef7b41ff40996c372dfd"
-stacks  = [ "io.buildpacks.stacks.bionic" ]
-
-  [[metadata.dependencies.licenses]]
-  type = "Apache-2.0"
-  uri  = "https://github.com/projectriff/node-function-invoker/blob/master/LICENSE"
-
 [metadata]
   pre_package = "ci/build.sh"
   include_files = [
