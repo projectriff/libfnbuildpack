@@ -21,9 +21,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
 	"github.com/projectriff/riff-buildpack/invoker"
 	"github.com/projectriff/riff-buildpack/metadata"
+)
+
+const (
+	Dependency = "riff-buildpack"
 )
 
 func main() {
@@ -70,5 +75,5 @@ func d(detect detect.Detect) (int, error) {
 		return detect.Error(invoker.Error_DetectAmbiguity), fmt.Errorf("detected riff function but ambiguous language detected: %v", detected)
 	}
 
-	return detect.Fail(), nil
+	return detect.Pass(buildplan.BuildPlan{})
 }

@@ -44,11 +44,11 @@ func TestDetect(t *testing.T) {
 			g.Expect(d(f.Detect)).To(Equal(detect.FailStatusCode))
 		})
 
-		it("fails with exactly one riff-invoker detected", func() {
+		it("passes with exactly one riff-invoker detected", func() {
 			f.AddBuildPlan("riff-invoker-node", buildplan.Dependency{})
 			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
-			g.Expect(d(f.Detect)).To(Equal(detect.FailStatusCode))
+			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
 		})
 
 		it("errors with no riff-invokers detected", func() {

@@ -17,11 +17,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", "riff-buildpack should never build")
-	os.Exit(101)
+	// nothing to do
+	os.Exit(0)
 }
