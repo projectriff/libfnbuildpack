@@ -47,21 +47,7 @@ type Invoker interface {
 	Contribute() error
 }
 
-type BuildpackCommands struct {
-	buildpack Buildpack
-}
-
-func NewBuildpackCommands(buildpack Buildpack) *BuildpackCommands {
-	return &BuildpackCommands{
-		buildpack: buildpack,
-	}
-}
-
-func (bc *BuildpackCommands) Name() string {
-	return bc.buildpack.Name()
-}
-
-func (bc *BuildpackCommands) Detect() {
+func Detect(bp Buildpack) {
 	detect, err := detect.DefaultDetect()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err)
@@ -73,7 +59,7 @@ func (bc *BuildpackCommands) Detect() {
 		os.Exit(Error_Initialize)
 	}
 
-	if code, err := bc.detect(detect); err != nil {
+	if code, err := doDetect(bp, detect); err != nil {
 		detect.Logger.Info(err.Error())
 		os.Exit(code)
 	} else {
@@ -81,7 +67,7 @@ func (bc *BuildpackCommands) Detect() {
 	}
 }
 
-func (bc *BuildpackCommands) detect(detect detect.Detect) (int, error) {
+func doDetect(bp Buildpack, detect detect.Detect) (int, error) {
 	metadata, ok, err := metadata.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
 		return detect.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
@@ -94,36 +80,36 @@ func (bc *BuildpackCommands) detect(detect detect.Detect) (int, error) {
 	detected := false
 
 	if metadata.Override != "" {
-		if metadata.Override == bc.Name() {
+		if metadata.Override == bp.Name() {
 			detected = true
-			detect.Logger.Debug("Override language: %q.", bc.Name())
+			detect.Logger.Debug("Override language: %q.", bp.Name())
 		}
 	} else {
-		if detected, err = bc.buildpack.Detect(detect, metadata); err != nil {
-			detect.Logger.Info("Error trying to use %s invoker: %s", bc.Name(), err.Error())
+		if detected, err = bp.Detect(detect, metadata); err != nil {
+			detect.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
 			return detect.Error(Error_DetectInternalError), nil
 		}
 
 		if detected {
-			detect.Logger.Debug("Detected language: %q.", bc.Name())
+			detect.Logger.Debug("Detected language: %q.", bp.Name())
 		}
 	}
 
 	if detected {
-		return detect.Pass(bc.buildpack.BuildPlan(detect, metadata))
+		return detect.Pass(bp.BuildPlan(detect, metadata))
 	}
 
 	return detect.Fail(), nil
 }
 
-func (bc *BuildpackCommands) Build() {
+func Build(bp Buildpack) {
 	build, err := build.DefaultBuild()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err)
 		os.Exit(101)
 	}
 
-	if code, err := bc.build(build); err != nil {
+	if code, err := doBuild(bp, build); err != nil {
 		build.Logger.Info(err.Error())
 		os.Exit(code)
 	} else {
@@ -131,10 +117,10 @@ func (bc *BuildpackCommands) Build() {
 	}
 }
 
-func (bc *BuildpackCommands) build(build build.Build) (int, error) {
+func doBuild(bp Buildpack, build build.Build) (int, error) {
 	build.Logger.FirstLine(build.Logger.PrettyIdentity(build.Buildpack))
 
-	if invoker, ok, err := bc.buildpack.Invoker(build); err != nil {
+	if invoker, ok, err := bp.Invoker(build); err != nil {
 		return build.Failure(105), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
