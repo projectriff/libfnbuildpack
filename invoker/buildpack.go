@@ -48,87 +48,87 @@ type Invoker interface {
 }
 
 func Detect(bp Buildpack) {
-	detect, err := detect.DefaultDetect()
+	d, err := detect.DefaultDetect()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err)
 		os.Exit(Error_Initialize)
 	}
 
-	if err := detect.BuildPlan.Init(); err != nil {
+	if err := d.BuildPlan.Init(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
 		os.Exit(Error_Initialize)
 	}
 
-	if code, err := doDetect(bp, detect); err != nil {
-		detect.Logger.Info(err.Error())
+	if code, err := doDetect(bp, d); err != nil {
+		d.Logger.Info(err.Error())
 		os.Exit(code)
 	} else {
 		os.Exit(code)
 	}
 }
 
-func doDetect(bp Buildpack, detect detect.Detect) (int, error) {
-	metadata, ok, err := metadata.NewMetadata(detect.Application, detect.Logger)
+func doDetect(bp Buildpack, d detect.Detect) (int, error) {
+	m, ok, err := metadata.NewMetadata(d.Application, d.Logger)
 	if err != nil {
-		return detect.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
+		return d.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}
 
 	if !ok {
-		return detect.Fail(), nil
+		return d.Fail(), nil
 	}
 
 	detected := false
 
-	if metadata.Override != "" {
-		if metadata.Override == bp.Name() {
+	if m.Override != "" {
+		if m.Override == bp.Name() {
 			detected = true
-			detect.Logger.Debug("Override language: %q.", bp.Name())
+			d.Logger.Debug("Override language: %q.", bp.Name())
 		}
 	} else {
-		if detected, err = bp.Detect(detect, metadata); err != nil {
-			detect.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
-			return detect.Error(Error_DetectInternalError), nil
+		if detected, err = bp.Detect(d, m); err != nil {
+			d.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
+			return d.Error(Error_DetectInternalError), nil
 		}
 
 		if detected {
-			detect.Logger.Debug("Detected language: %q.", bp.Name())
+			d.Logger.Debug("Detected language: %q.", bp.Name())
 		}
 	}
 
 	if detected {
-		return detect.Pass(bp.BuildPlan(detect, metadata))
+		return d.Pass(bp.BuildPlan(d, m))
 	}
 
-	return detect.Fail(), nil
+	return d.Fail(), nil
 }
 
 func Build(bp Buildpack) {
-	build, err := build.DefaultBuild()
+	b, err := build.DefaultBuild()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err)
 		os.Exit(101)
 	}
 
-	if code, err := doBuild(bp, build); err != nil {
-		build.Logger.Info(err.Error())
+	if code, err := doBuild(bp, b); err != nil {
+		b.Logger.Info(err.Error())
 		os.Exit(code)
 	} else {
 		os.Exit(code)
 	}
 }
 
-func doBuild(bp Buildpack, build build.Build) (int, error) {
-	build.Logger.FirstLine(build.Logger.PrettyIdentity(build.Buildpack))
+func doBuild(bp Buildpack, b build.Build) (int, error) {
+	b.Logger.FirstLine(b.Logger.PrettyIdentity(b.Buildpack))
 
-	if invoker, ok, err := bp.Invoker(build); err != nil {
-		return build.Failure(105), err
+	if invoker, ok, err := bp.Invoker(b); err != nil {
+		return b.Failure(105), err
 	} else if ok {
 		if err = invoker.Contribute(); err != nil {
-			return build.Failure(106), err
+			return b.Failure(106), err
 		}
-		return build.Success(buildplan.BuildPlan{})
+		return b.Success(buildplan.BuildPlan{})
 	}
 
-	build.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
-	return build.Failure(104), nil
+	b.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
+	return b.Failure(104), nil
 }
