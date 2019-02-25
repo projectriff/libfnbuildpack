@@ -23,8 +23,7 @@ import (
 
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
-	"github.com/projectriff/riff-buildpack/invoker"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/function"
 )
 
 const (
@@ -35,12 +34,12 @@ func main() {
 	detect, err := detect.DefaultDetect()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err)
-		os.Exit(invoker.Error_Initialize)
+		os.Exit(function.Error_Initialize)
 	}
 
 	if err := detect.BuildPlan.Init(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
-		os.Exit(invoker.Error_Initialize)
+		os.Exit(function.Error_Initialize)
 	}
 
 	if code, err := d(detect); err != nil {
@@ -52,9 +51,9 @@ func main() {
 }
 
 func d(detect detect.Detect) (int, error) {
-	_, ok, err := metadata.NewMetadata(detect.Application, detect.Logger)
+	_, ok, err := function.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
-		return detect.Error(invoker.Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
+		return detect.Error(function.Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}
 
 	if !ok {
@@ -70,9 +69,9 @@ func d(detect detect.Detect) (int, error) {
 	}
 
 	if len(detected) == 0 {
-		return detect.Error(invoker.Error_DetectedNone), fmt.Errorf("detected riff function but unable to determine function type")
+		return detect.Error(function.Error_DetectedNone), fmt.Errorf("detected riff function but unable to determine function type")
 	} else if len(detected) > 1 {
-		return detect.Error(invoker.Error_DetectAmbiguity), fmt.Errorf("detected riff function but ambiguous language detected: %v", detected)
+		return detect.Error(function.Error_DetectAmbiguity), fmt.Errorf("detected riff function but ambiguous language detected: %v", detected)
 	}
 
 	return detect.Pass(buildplan.BuildPlan{})

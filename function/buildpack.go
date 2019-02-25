@@ -15,7 +15,7 @@
  *
  */
 
-package invoker
+package function
 
 import (
 	"fmt"
@@ -24,7 +24,6 @@ import (
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
-	"github.com/projectriff/riff-buildpack/metadata"
 )
 
 const (
@@ -38,8 +37,8 @@ const (
 
 type Buildpack interface {
 	Name() string
-	Detect(detect detect.Detect, metadata metadata.Metadata) (bool, error)
-	BuildPlan(detect detect.Detect, metadata metadata.Metadata) buildplan.BuildPlan
+	Detect(detect detect.Detect, metadata Metadata) (bool, error)
+	BuildPlan(detect detect.Detect, metadata Metadata) buildplan.BuildPlan
 	Invoker(build build.Build) (Invoker, bool, error)
 }
 
@@ -68,7 +67,7 @@ func Detect(bp Buildpack) {
 }
 
 func doDetect(bp Buildpack, d detect.Detect) (int, error) {
-	m, ok, err := metadata.NewMetadata(d.Application, d.Logger)
+	m, ok, err := NewMetadata(d.Application, d.Logger)
 	if err != nil {
 		return d.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}

@@ -24,7 +24,7 @@ import (
 	"github.com/buildpack/libbuildpack/detect"
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/invoker"
+	"github.com/projectriff/riff-buildpack/function"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
@@ -55,7 +55,7 @@ func TestDetect(t *testing.T) {
 			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(invoker.Error_DetectedNone))
+			g.Expect(code).To(Equal(function.Error_DetectedNone))
 			g.Expect(err).To(HaveOccurred())
 		})
 
@@ -65,7 +65,7 @@ func TestDetect(t *testing.T) {
 			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(invoker.Error_DetectAmbiguity))
+			g.Expect(code).To(Equal(function.Error_DetectAmbiguity))
 			g.Expect(err).To(HaveOccurred())
 		})
 	}, spec.Report(report.Terminal{}))
