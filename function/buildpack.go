@@ -33,16 +33,13 @@ const (
 	Error_DetectAmbiguity     = 104
 	Error_UnsupportedLanguage = 105
 	Error_DetectInternalError = 106
+	Error_BuildInternalError  = 102
 )
 
 type Buildpack interface {
 	Name() string
 	Detect(detect detect.Detect, metadata Metadata) (*buildplan.BuildPlan, error)
-	Invoker(build build.Build) (Invoker, bool, error)
-}
-
-type Invoker interface {
-	Contribute() error
+	Build(build build.Build) error
 }
 
 func Detect(bp Buildpack) {
@@ -87,7 +84,7 @@ func doDetect(bp Buildpack, d detect.Detect) (int, error) {
 	}
 	if plan == nil {
 		if m.Override == "" {
-			// didn't detect
+			// didn't detect, normal
 			return d.Fail(), nil
 		}
 		// expected to detect, but didn't
@@ -103,7 +100,7 @@ func Build(bp Buildpack) {
 	b, err := build.DefaultBuild()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build: %s\n", err)
-		os.Exit(101)
+		os.Exit(Error_Initialize)
 	}
 
 	if code, err := doBuild(bp, b); err != nil {
@@ -117,15 +114,8 @@ func Build(bp Buildpack) {
 func doBuild(bp Buildpack, b build.Build) (int, error) {
 	b.Logger.FirstLine(b.Logger.PrettyIdentity(b.Buildpack))
 
-	if invoker, ok, err := bp.Invoker(b); err != nil {
-		return b.Failure(105), err
-	} else if ok {
-		if err = invoker.Contribute(); err != nil {
-			return b.Failure(106), err
-		}
-		return b.Success(buildplan.BuildPlan{})
+	if err := bp.Build(b); err != nil {
+		return b.Failure(Error_BuildInternalError), fmt.Errorf("unable to build invoker %q: %s", bp.Name(), err)
 	}
-
-	b.Logger.Info("Buildpack passed detection but did not know how to actually build. Should never happen.")
-	return b.Failure(104), nil
+	return b.Success(buildplan.BuildPlan{})
 }
