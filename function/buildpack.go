@@ -37,8 +37,7 @@ const (
 
 type Buildpack interface {
 	Name() string
-	Detect(detect detect.Detect, metadata Metadata) (bool, error)
-	BuildPlan(detect detect.Detect, metadata Metadata) buildplan.BuildPlan
+	Detect(detect detect.Detect, metadata Metadata) (*buildplan.BuildPlan, error)
 	Invoker(build build.Build) (Invoker, bool, error)
 }
 
@@ -76,29 +75,28 @@ func doDetect(bp Buildpack, d detect.Detect) (int, error) {
 		return d.Fail(), nil
 	}
 
-	detected := false
-
-	if m.Override != "" {
-		if m.Override == bp.Name() {
-			detected = true
-			d.Logger.Debug("Override language: %q.", bp.Name())
-		}
-	} else {
-		if detected, err = bp.Detect(d, m); err != nil {
-			d.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
-			return d.Error(Error_DetectInternalError), nil
-		}
-
-		if detected {
-			d.Logger.Debug("Detected language: %q.", bp.Name())
-		}
+	if m.Override != "" && m.Override != bp.Name() {
+		// targeting a different language
+		return d.Fail(), nil
 	}
 
-	if detected {
-		return d.Pass(bp.BuildPlan(d, m))
+	plan, err := bp.Detect(d, m)
+	if err != nil {
+		d.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
+		return d.Error(Error_DetectInternalError), nil
+	}
+	if plan == nil {
+		if m.Override == "" {
+			// didn't detect
+			return d.Fail(), nil
+		}
+		// expected to detect, but didn't
+		d.Logger.Info("Unable to detect invoker: %s", bp.Name())
+		return d.Error(Error_DetectInternalError), nil
 	}
 
-	return d.Fail(), nil
+	d.Logger.Debug("Detected language: %q.", bp.Name())
+	return d.Pass(*plan)
 }
 
 func Build(bp Buildpack) {
