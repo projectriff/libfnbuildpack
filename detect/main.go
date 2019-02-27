@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	Dependency = "riff-buildpack"
+	Dependency    = "riff-buildpack"
+	invokerPrefix = "riff-invoker-"
 )
 
 func main() {
@@ -63,8 +64,8 @@ func d(detect detect.Detect) (int, error) {
 	detected := []string{}
 
 	for name := range detect.BuildPlan {
-		if strings.HasPrefix(name, "riff-invoker-") {
-			detected = append(detected, name)
+		if strings.HasPrefix(name, invokerPrefix) {
+			detected = append(detected, name[len(invokerPrefix):])
 		}
 	}
 
