@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package metadata_test
+package function_test
 
 import (
 	"path/filepath"
@@ -22,7 +22,7 @@ import (
 
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/metadata"
+	"github.com/projectriff/riff-buildpack/function"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
@@ -39,7 +39,7 @@ func TestMetadata(t *testing.T) {
 		})
 
 		it("returns false if riff.toml does not exist", func() {
-			_, ok, err := metadata.NewMetadata(f.Build.Application, f.Build.Logger)
+			_, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
 			g.Expect(ok).To(BeFalse())
 			g.Expect(err).NotTo(HaveOccurred())
 		})
@@ -47,11 +47,11 @@ func TestMetadata(t *testing.T) {
 		it("returns metadata if riff.toml does exist", func() {
 			test.WriteFile(t, filepath.Join(f.Build.Application.Root, "riff.toml"), `handler = "test-handler"`)
 
-			actual, ok, err := metadata.NewMetadata(f.Build.Application, f.Build.Logger)
+			actual, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
 			g.Expect(ok).To(BeTrue())
 			g.Expect(err).NotTo(HaveOccurred())
 
-			g.Expect(actual).To(Equal(metadata.Metadata{Handler: "test-handler"}))
+			g.Expect(actual).To(Equal(function.Metadata{Handler: "test-handler"}))
 		})
 	}, spec.Report(report.Terminal{}))
 }

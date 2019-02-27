@@ -22,15 +22,9 @@ import (
 
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/buildpack/libbuildpack/detect"
-	"github.com/cloudfoundry/jvm-application-buildpack/jvmapplication"
 	"github.com/cloudfoundry/libcfbuildpack/test"
-	nodeCNB "github.com/cloudfoundry/nodejs-cnb/node"
-	"github.com/cloudfoundry/npm-cnb/modules"
-	"github.com/cloudfoundry/openjdk-buildpack/jre"
 	. "github.com/onsi/gomega"
-	"github.com/projectriff/riff-buildpack/command"
-	"github.com/projectriff/riff-buildpack/java"
-	"github.com/projectriff/riff-buildpack/node"
+	"github.com/projectriff/riff-buildpack/function"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 )
@@ -50,102 +44,28 @@ func TestDetect(t *testing.T) {
 			g.Expect(d(f.Detect)).To(Equal(detect.FailStatusCode))
 		})
 
-		it("passes and opts in for the java-invoker if the JVM app BP applied", func() {
-			f.AddBuildPlan(jvmapplication.Dependency, buildplan.Dependency{})
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `handler = "test-handler"`)
+		it("passes with exactly one riff-invoker detected", func() {
+			f.AddBuildPlan("riff-invoker-node", buildplan.Dependency{})
+			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
 			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
-
-			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
-				jre.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
-				},
-				java.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{java.Handler: "test-handler"},
-				},
-			}))
 		})
 
-		it("passes and opts in for the node-invoker if the NPM app BP applied", func() {
-			f.AddBuildPlan(modules.Dependency, buildplan.Dependency{})
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "my.js"`)
-
-			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
-
-			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
-				nodeCNB.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{"launch": true, "build": true},
-				},
-				node.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{node.FunctionArtifact: "my.js"},
-				},
-			}))
-		})
-
-		it("passes and opts in for the node-invoker if the NPM app BP did not apply, but artifact is .js", func() {
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "my.js"), "module.exports = x => x**2")
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "my.js"`)
-
-			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
-
-			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
-				nodeCNB.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{"launch": true, "build": true},
-				},
-				node.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{node.FunctionArtifact: "my.js"},
-				},
-			}))
-		})
-
-		it("passes and opts in for the command-invoker if the artifact is executable", func() {
-			test.WriteFileWithPerm(t, filepath.Join(f.Detect.Application.Root, "fn.sh"), 0755 /*<-executable*/, "some bash")
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "fn.sh"`)
-
-			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
-
-			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
-				command.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{command.Command: "fn.sh"},
-				},
-			}))
-		})
-
-		it("fails if ambiguity", func() {
-			f.AddBuildPlan(jvmapplication.Dependency, buildplan.Dependency{})
-			f.AddBuildPlan(modules.Dependency, buildplan.Dependency{})
-			test.WriteFileWithPerm(t, filepath.Join(f.Detect.Application.Root, "fn.sh"), 0755 /*<-executable*/, "some bash")
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "fn.sh"`)
+		it("errors with no riff-invokers detected", func() {
+			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(Error_DetectAmbiguity))
+			g.Expect(code).To(Equal(function.Error_DetectedNone))
 			g.Expect(err).To(HaveOccurred())
 		})
 
-		it("override resolves ambiguity", func() {
-			f.AddBuildPlan(jvmapplication.Dependency, buildplan.Dependency{})
-			f.AddBuildPlan(modules.Dependency, buildplan.Dependency{})
-			test.WriteFileWithPerm(t, filepath.Join(f.Detect.Application.Root, "fn.sh"), 0755 /*<-executable*/, "some bash")
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `artifact = "fn.sh"
-override = "java"`)
-
-			g.Expect(d(f.Detect)).To(Equal(detect.PassStatusCode))
-
-			g.Expect(f.Output).To(Equal(buildplan.BuildPlan{
-				jre.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{jre.LaunchContribution: true},
-				},
-				java.Dependency: buildplan.Dependency{
-					Metadata: buildplan.Metadata{java.Handler: ""},
-				},
-			}))
-		})
-
-		it("errors with metadata but no application-type", func() {
-			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), `handler = "test-handler"`)
+		it("errors with multiple riff-invokers detected", func() {
+			f.AddBuildPlan("riff-invoker-node", buildplan.Dependency{})
+			f.AddBuildPlan("riff-invoker-java", buildplan.Dependency{})
+			test.WriteFile(t, filepath.Join(f.Detect.Application.Root, "riff.toml"), ``)
 
 			code, err := d(f.Detect)
-			g.Expect(code).To(Equal(Error_DetectedNone))
+			g.Expect(code).To(Equal(function.Error_DetectAmbiguity))
 			g.Expect(err).To(HaveOccurred())
 		})
 	}, spec.Report(report.Terminal{}))
