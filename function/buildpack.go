@@ -28,7 +28,7 @@ import (
 
 const (
 	Error_Initialize          = 101
-	Error_ReadMetadata        = 102
+	Error_DetectReadMetadata  = 102
 	Error_DetectedNone        = 103
 	Error_DetectAmbiguity     = 104
 	Error_UnsupportedLanguage = 105
@@ -37,7 +37,7 @@ const (
 )
 
 type Buildpack interface {
-	Name() string
+	Id() string
 	Detect(detect detect.Detect, metadata Metadata) (*buildplan.BuildPlan, error)
 	Build(build build.Build) error
 }
@@ -65,21 +65,21 @@ func Detect(bp Buildpack) {
 func doDetect(bp Buildpack, d detect.Detect) (int, error) {
 	m, ok, err := NewMetadata(d.Application, d.Logger)
 	if err != nil {
-		return d.Error(Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
+		return d.Error(Error_DetectReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}
 
 	if !ok {
 		return d.Fail(), nil
 	}
 
-	if m.Override != "" && m.Override != bp.Name() {
+	if m.Override != "" && m.Override != bp.Id() {
 		// targeting a different language
 		return d.Fail(), nil
 	}
 
 	plan, err := bp.Detect(d, m)
 	if err != nil {
-		d.Logger.Info("Error trying to use %s invoker: %s", bp.Name(), err.Error())
+		d.Logger.Info("Error trying to use %s invoker: %s", bp.Id(), err.Error())
 		return d.Error(Error_DetectInternalError), nil
 	}
 	if plan == nil {
@@ -88,11 +88,11 @@ func doDetect(bp Buildpack, d detect.Detect) (int, error) {
 			return d.Fail(), nil
 		}
 		// expected to detect, but didn't
-		d.Logger.Info("Unable to detect invoker: %s", bp.Name())
+		d.Logger.Info("Unable to detect invoker: %s", bp.Id())
 		return d.Error(Error_DetectInternalError), nil
 	}
 
-	d.Logger.Debug("Detected language: %q.", bp.Name())
+	d.Logger.Debug("Detected language: %q.", bp.Id())
 	return d.Pass(*plan)
 }
 
@@ -115,7 +115,7 @@ func doBuild(bp Buildpack, b build.Build) (int, error) {
 	b.Logger.FirstLine(b.Logger.PrettyIdentity(b.Buildpack))
 
 	if err := bp.Build(b); err != nil {
-		return b.Failure(Error_BuildInternalError), fmt.Errorf("unable to build invoker %q: %s", bp.Name(), err)
+		return b.Failure(Error_BuildInternalError), fmt.Errorf("unable to build invoker %q: %s", bp.Id(), err)
 	}
 	return b.Success(buildplan.BuildPlan{})
 }

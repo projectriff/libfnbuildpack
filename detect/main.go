@@ -54,7 +54,7 @@ func main() {
 func d(detect detect.Detect) (int, error) {
 	_, ok, err := function.NewMetadata(detect.Application, detect.Logger)
 	if err != nil {
-		return detect.Error(function.Error_ReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
+		return detect.Error(function.Error_DetectReadMetadata), fmt.Errorf("unable to read riff metadata: %s", err.Error())
 	}
 
 	if !ok {
