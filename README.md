@@ -74,5 +74,5 @@ file of a builder (see https://github.com/projectriff/riff-buildpack-group)
 
 
 ## License
-This buildpack is released under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
+This buildpack is released under version 2.0 of the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
 
