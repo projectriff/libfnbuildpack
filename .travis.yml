@@ -1,15 +1,9 @@
 language: go
 go:
-  - '1.11.x'
+  - '1.12.x'
 cache:
   directories:
   - $GOPATH/pkg/mod
-install: true
-script: GO111MODULE=on make build
-deploy:
-  skip_cleanup: true
-  provider: script
-  script: bash .travis/deploy.sh
-  on:
-    all_branches: true
-    condition: $TRAVIS_EVENT_TYPE = push && ($TRAVIS_BRANCH = master || $TRAVIS_BRANCH =~ ^v([0-9]+\.)+x$)
+env:
+  global:
+  - GO111MODULE=on
