@@ -17,6 +17,7 @@
 package function_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -38,20 +39,75 @@ func TestMetadata(t *testing.T) {
 			f = test.NewBuildFactory(t)
 		})
 
-		it("returns false if riff.toml does not exist", func() {
+		it.After(func() {
+			os.Unsetenv(function.RiffEnv)
+			os.Unsetenv(function.ArtifactEnv)
+			os.Unsetenv(function.HandlerEnv)
+			os.Unsetenv(function.OverrideEnv)
+		})
+
+		it("returns false if riff.toml does not exist and RIFF env not set", func() {
 			_, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
 			g.Expect(ok).To(BeFalse())
 			g.Expect(err).NotTo(HaveOccurred())
 		})
 
-		it("returns metadata if riff.toml does exist", func() {
-			test.WriteFile(t, filepath.Join(f.Build.Application.Root, "riff.toml"), `handler = "test-handler"`)
+		it("returns metadata if riff.toml exists", func() {
+			test.WriteFile(t, filepath.Join(f.Build.Application.Root, "riff.toml"), `
+artifact = "toml-artifact"
+handler = "toml-handler"
+override = "toml-override"
+`)
 
 			actual, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
 			g.Expect(ok).To(BeTrue())
 			g.Expect(err).NotTo(HaveOccurred())
 
-			g.Expect(actual).To(Equal(function.Metadata{Handler: "test-handler"}))
+			g.Expect(actual).To(Equal(function.Metadata{
+				Artifact: "toml-artifact",
+				Handler:  "toml-handler",
+				Override: "toml-override",
+			}))
 		})
+
+		it("returns metadata if RIFF env exists", func() {
+			os.Setenv("RIFF", "true")
+			os.Setenv("RIFF_ARTIFACT", "env-artifact")
+			os.Setenv("RIFF_HANDLER", "env-handler")
+			os.Setenv("RIFF_OVERRIDE", "env-override")
+
+			actual, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
+			g.Expect(ok).To(BeTrue())
+			g.Expect(err).NotTo(HaveOccurred())
+
+			g.Expect(actual).To(Equal(function.Metadata{
+				Artifact: "env-artifact",
+				Handler:  "env-handler",
+				Override: "env-override",
+			}))
+		})
+
+		it("environment overrides riff.toml", func() {
+			os.Setenv("RIFF", "true")
+			os.Setenv("RIFF_ARTIFACT", "env-artifact")
+			os.Setenv("RIFF_HANDLER", "env-handler")
+			os.Setenv("RIFF_OVERRIDE", "env-override")
+			test.WriteFile(t, filepath.Join(f.Build.Application.Root, "riff.toml"), `
+artifact = "toml-artifact"
+handler = "toml-handler"
+override = "toml-override"
+`)
+
+			actual, ok, err := function.NewMetadata(f.Build.Application, f.Build.Logger)
+			g.Expect(ok).To(BeTrue())
+			g.Expect(err).NotTo(HaveOccurred())
+
+			g.Expect(actual).To(Equal(function.Metadata{
+				Artifact: "env-artifact",
+				Handler:  "env-handler",
+				Override: "env-override",
+			}))
+		})
+
 	}, spec.Report(report.Terminal{}))
 }

@@ -18,12 +18,20 @@ package function
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/buildpack/libbuildpack/application"
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/logger"
+)
+
+const (
+	RiffEnv     = "RIFF"
+	ArtifactEnv = "RIFF_ARTIFACT"
+	HandlerEnv  = "RIFF_HANDLER"
+	OverrideEnv = "RIFF_OVERRIDE"
 )
 
 // Metadata represents the contents of the riff.toml file in an application root
@@ -57,14 +65,28 @@ func NewMetadata(application application.Application, logger logger.Logger) (Met
 		return Metadata{}, false, err
 	}
 
-	if !exists {
+	if !exists && os.Getenv(RiffEnv) == "" {
+		// not a function: no riff.toml, to RIFF envvar
 		return Metadata{}, false, nil
 	}
 
 	var metadata Metadata
-	_, err = toml.DecodeFile(f, &metadata)
-	if err != nil {
-		return Metadata{}, false, err
+
+	if exists {
+		_, err = toml.DecodeFile(f, &metadata)
+		if err != nil {
+			return Metadata{}, false, err
+		}
+	}
+	// environment overrides riff.toml values
+	if artifact := os.Getenv(ArtifactEnv); artifact != "" {
+		metadata.Artifact = artifact
+	}
+	if handler := os.Getenv(HandlerEnv); handler != "" {
+		metadata.Handler = handler
+	}
+	if override := os.Getenv(OverrideEnv); override != "" {
+		metadata.Override = override
 	}
 
 	logger.Debug("riff metadata: %s", metadata)
