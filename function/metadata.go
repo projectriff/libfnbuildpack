@@ -66,7 +66,7 @@ func NewMetadata(application application.Application, logger logger.Logger) (Met
 	}
 
 	if !exists && os.Getenv(RiffEnv) == "" {
-		// not a function: no riff.toml, to RIFF envvar
+		// not a function: no riff.toml, no RIFF envvar
 		return Metadata{}, false, nil
 	}
 
