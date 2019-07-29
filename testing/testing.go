@@ -54,6 +54,7 @@ type Testcase struct {
 	Handler     string `toml:"handler"`
 	Override    string `toml:"override"`
 	ContentType string `toml:"content-type"`
+	Accept      string `toml:"accept"`
 	Input       string `toml:"input"`
 	Output      string `toml:"output"`
 	SkipRebuild bool   `toml:"skip-rebuild"`
@@ -122,6 +123,9 @@ func (tc *Testcase) merge(c *Testcase) *Testcase {
 	if tc.ContentType == "" {
 		tc.ContentType = c.ContentType
 	}
+	if tc.Accept == "" {
+		tc.Accept = c.Accept
+	}
 	if tc.Input == "" {
 		tc.Input = c.Input
 	}
@@ -139,13 +143,21 @@ func (tc *Testcase) deleteImage(t *testing.T, fnImg string) {
 }
 
 func (tc *Testcase) invokeFunction(t *testing.T, localPort int32) {
-	if resp, err := http.Post(fmt.Sprintf("http://localhost:%d", localPort), tc.ContentType, strings.NewReader(tc.Input)); err != nil {
-		t.Fatalf("could not post to function: %v", err)
+	client := &http.Client{}
+	url := fmt.Sprintf("http://localhost:%d", localPort)
+	if req, err := http.NewRequest("POST", url, strings.NewReader(tc.Input)); err != nil {
+		t.Fatalf("could not create POST request: %v", err)
 	} else {
-		if result, err := ioutil.ReadAll(resp.Body); err != nil {
-			t.Fatalf("could not read response from function: %v", err)
-		} else if string(result) != tc.Output {
-			t.Fatalf("unexpected result from function: %q != %q", string(result), tc.Output)
+		req.Header.Set("content-type", tc.ContentType)
+		req.Header.Set("accept", tc.Accept)
+		if resp, err := client.Do(req); err != nil {
+			t.Fatalf("could not post to function: %v", err)
+		} else {
+			if result, err := ioutil.ReadAll(resp.Body); err != nil {
+				t.Fatalf("could not read response from function: %v", err)
+			} else if string(result) != tc.Output {
+				t.Fatalf("unexpected result from function: %q != %q", string(result), tc.Output)
+			}
 		}
 	}
 }
