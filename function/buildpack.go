@@ -38,7 +38,7 @@ const (
 
 type Buildpack interface {
 	Id() string
-	Detect(detect detect.Detect, metadata Metadata) (*buildplan.BuildPlan, error)
+	Detect(detect detect.Detect, metadata Metadata) (*buildplan.Plan, error)
 	Build(build build.Build) error
 }
 
@@ -46,11 +46,6 @@ func Detect(bp Buildpack) {
 	d, err := detect.DefaultDetect()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Detect: %s\n", err)
-		os.Exit(Error_Initialize)
-	}
-
-	if err := d.BuildPlan.Init(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
 		os.Exit(Error_Initialize)
 	}
 
@@ -112,10 +107,10 @@ func Build(bp Buildpack) {
 }
 
 func doBuild(bp Buildpack, b build.Build) (int, error) {
-	b.Logger.FirstLine(b.Logger.PrettyIdentity(b.Buildpack))
+	b.Logger.Title(b.Buildpack)
 
 	if err := bp.Build(b); err != nil {
 		return b.Failure(Error_BuildInternalError), fmt.Errorf("unable to build invoker %q: %s", bp.Id(), err)
 	}
-	return b.Success(buildplan.BuildPlan{})
+	return b.Success()
 }
