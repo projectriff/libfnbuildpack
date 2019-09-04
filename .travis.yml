@@ -1,9 +1,12 @@
 language: go
 go:
-  - '1.12.x'
+- 1.12.x
 cache:
   directories:
-  - $GOPATH/pkg/mod
+  - "$GOPATH/pkg/mod"
 env:
   global:
   - GO111MODULE=on
+notifications:
+  slack:
+    secure: mZz6KMnNw+5Q4Y/nnq+k4wVGH7Ql1XuEyT+HPHCoJvmlOvseNQq8UgCAWigsRYKPi2TwBFosdEyVFvfUcL2A4ijJNYk1t+lqQX5RDXtHEUERCMmL/GIPJfosA2CmAEU25ZG+dtlLeuYck++JwGLn/TZf07v6KC4QgY0dwIB83k44DAI/ihtJsjI05f1kVXZ/yd84FyhNkuwec4mxzFjgNTZR4vUzp6iMwELWvpC1HPmbaU8u81ooadzjnb5hfaR7A+FXIRYZkHbNd8d3DvPKgXDjRzRzJXcO0QWrFzgTbmUeBoLAvdnyC/HyU3KdQZxrQUHPjAfOiONUx8R9u439McI1HUwlb67cmi2sbakt4q+qCgjPhnsAk/a/r2QFxgTct4BVm8iqNyImcTKYSkbmdZWU/yCDqHtp8kMIUqs2DQUGs3b2H849m/gR6FujRo57wMzRx9Tt+Kk3qbvDGNRu1jaNlj+GPqXBfoDNentxLk4DQpiSfI/qwOH4qaj9amtPUbnB1/vCTUsIhC4N5rp6EkVBfsWNiIvFk2g/RmMXMcKyPTw3U68C4ibWG7v4XmphAB7Dp6q3m47VmKknuHjauEjz6X2LWe+o8J+ZmnUouJl3gE4q06aKyZKzksZnA9nUUgL5JmGayGOUCK0vlVot0YBC6Eaavo9o0dYXHb6Pz8w=
