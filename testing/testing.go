@@ -238,12 +238,7 @@ func (tc *Testcase) runPackCmd(s ...string) error {
 	if len(tc.PackCmd) > 1 {
 		s = append(tc.PackCmd[1:], s...)
 	}
-
-	if cmd, err := tc.startCmd(c, s...); err != nil {
-		return err
-	} else {
-		return cmd.Wait()
-	}
+	return tc.runCmd(c, s...)
 }
 
 func (tc *Testcase) startCmd(c string, s ...string) (*exec.Cmd, error) {
