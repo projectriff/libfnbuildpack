@@ -46,21 +46,26 @@ func (tcs *Testcases) Run(t *testing.T) {
 }
 
 type Testcase struct {
-	Name        string `toml:"name"`
-	Repo        string `toml:"repo"`
-	Refspec     string `toml:"refspec"`
-	SubPath     string `toml:"sub-path"`
-	Artifact    string `toml:"artifact"`
-	Handler     string `toml:"handler"`
-	Override    string `toml:"override"`
-	ContentType string `toml:"content-type"`
-	Accept      string `toml:"accept"`
-	Input       string `toml:"input"`
-	Output      string `toml:"output"`
-	SkipRebuild bool   `toml:"skip-rebuild"`
+	Name        string   `toml:"name"`
+	Repo        string   `toml:"repo"`
+	Refspec     string   `toml:"refspec"`
+	SubPath     string   `toml:"sub-path"`
+	Artifact    string   `toml:"artifact"`
+	Handler     string   `toml:"handler"`
+	Override    string   `toml:"override"`
+	ContentType string   `toml:"content-type"`
+	Accept      string   `toml:"accept"`
+	Input       string   `toml:"input"`
+	Output      string   `toml:"output"`
+	SkipRebuild bool     `toml:"skip-rebuild"`
+	PackCmd     []string `toml:"packCmd"`
 }
 
 func (tc *Testcase) Run(t *testing.T) {
+	if len(tc.PackCmd) == 0 {
+		tc.PackCmd = []string{"pack"}
+	}
+
 	appdir, err := ioutil.TempDir("", "builder-")
 	if err != nil {
 		t.Fatalf("could not create temp dir: %v", err)
@@ -132,6 +137,9 @@ func (tc *Testcase) merge(c *Testcase) *Testcase {
 	if tc.Output == "" {
 		tc.Output = c.Output
 	}
+	if len(tc.PackCmd) == 0 {
+		tc.PackCmd = c.PackCmd
+	}
 
 	return tc
 }
@@ -190,7 +198,7 @@ func (tc *Testcase) startServer(t *testing.T, fnImg string) (int32, *exec.Cmd) {
 }
 
 func (tc *Testcase) createFunctionImg(t *testing.T, fnImg string, appdir string) {
-	err := tc.runCmd("pack", "build", "--no-pull",
+	err := tc.runPackCmd("build", "--no-pull",
 		"--builder", "projectriff/builder",
 		"--path", appdir,
 		"--env", fmt.Sprintf("%s=%s", "RIFF", "true"),
@@ -223,6 +231,14 @@ func (tc *Testcase) runCmd(c string, s ...string) error {
 	} else {
 		return cmd.Wait()
 	}
+}
+
+func (tc *Testcase) runPackCmd(s ...string) error {
+	c := tc.PackCmd[0]
+	if len(tc.PackCmd) > 1 {
+		s = append(tc.PackCmd[1:], s...)
+	}
+	return tc.runCmd(c, s...)
 }
 
 func (tc *Testcase) startCmd(c string, s ...string) (*exec.Cmd, error) {
