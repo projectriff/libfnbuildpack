@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package libfnbuildpack_test
+package libfnbuildpack
 
 import (
-	"testing"
-
-	"github.com/sclevine/spec"
-	"github.com/sclevine/spec/report"
+	"fmt"
 )
 
-func TestUnit(t *testing.T) {
-	suite := spec.New("libfnbuildpack", spec.Report(report.Terminal{}))
-	suite("Formatter", testFormatter)
-	suite("Metadata", testMetadata)
-	suite.Run(t)
+// FormatFunction formats a type and an optional name in the form 'functionType[ name]'.
+func FormatFunction(functionType string, name string) string {
+	if name == "" {
+		return functionType
+	}
+
+	return fmt.Sprintf("%s %s", functionType, name)
 }

@@ -19,13 +19,22 @@ package libfnbuildpack_test
 import (
 	"testing"
 
+	. "github.com/onsi/gomega"
+	"github.com/projectriff/libfnbuildpack"
 	"github.com/sclevine/spec"
-	"github.com/sclevine/spec/report"
 )
 
-func TestUnit(t *testing.T) {
-	suite := spec.New("libfnbuildpack", spec.Report(report.Terminal{}))
-	suite("Formatter", testFormatter)
-	suite("Metadata", testMetadata)
-	suite.Run(t)
+func testFormatter(t *testing.T, context spec.G, it spec.S) {
+	var (
+		Expect = NewWithT(t).Expect
+	)
+
+	it("formats type without name", func() {
+		Expect(libfnbuildpack.FormatFunction("test-type", "")).To(Equal("test-type"))
+	})
+
+	it("formats name with type", func() {
+		Expect(libfnbuildpack.FormatFunction("test-type", "test-function")).To(Equal("test-type test-function"))
+	})
+
 }
