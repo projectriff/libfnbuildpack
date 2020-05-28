@@ -48,10 +48,26 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 
 	context("IsRiff", func() {
 
-		context("RIFF", func() {
+		context(`RIFF=""`, func() {
 
 			it.Before(func() {
 				Expect(os.Setenv("RIFF", "")).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("RIFF")).To(Succeed())
+			})
+
+			it("returns false if environment variable is empty", func() {
+				Expect(libfnbuildpack.IsRiff(path, libpak.ConfigurationResolver{})).To(BeFalse())
+			})
+
+		})
+
+		context(`RIFF="true"`, func() {
+
+			it.Before(func() {
+				Expect(os.Setenv("RIFF", "true")).To(Succeed())
 			})
 
 			it.After(func() {
@@ -94,7 +110,32 @@ handler  = "test-handler-1"
 			}))
 		})
 
-		context("$RIFF_ARTIFACT", func() {
+		context(`$RIFF_ARTIFACT=""`, func() {
+
+			it.Before(func() {
+				Expect(os.Setenv("RIFF_ARTIFACT", "")).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("RIFF_ARTIFACT")).To(Succeed())
+			})
+
+			it("return contents of riff.toml", func() {
+				Expect(ioutil.WriteFile(filepath.Join(path, "riff.toml"), []byte(`
+artifact = "test-artifact-1"
+handler  = "test-handler-1"
+`), 0644)).To(Succeed())
+
+				Expect(libfnbuildpack.Metadata(path, libpak.ConfigurationResolver{})).To(Equal(map[string]interface{}{
+					"artifact": "test-artifact-1",
+					"handler":  "test-handler-1",
+				}))
+			})
+
+		})
+
+
+		context(`$RIFF_ARTIFACT="test-artifact-2"`, func() {
 
 			it.Before(func() {
 				Expect(os.Setenv("RIFF_ARTIFACT", "test-artifact-2")).To(Succeed())
@@ -118,7 +159,31 @@ handler  = "test-handler-1"
 
 		})
 
-		context("$RIFF_HANDLER", func() {
+		context(`$RIFF_HANDLER="test-handler-2"`, func() {
+
+			it.Before(func() {
+				Expect(os.Setenv("RIFF_HANDLER", "")).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("RIFF_HANDLER")).To(Succeed())
+			})
+
+			it("return contents of $RIFF_HANDLER", func() {
+				Expect(ioutil.WriteFile(filepath.Join(path, "riff.toml"), []byte(`
+artifact = "test-artifact-1"
+handler  = "test-handler-1"
+`), 0644)).To(Succeed())
+
+				Expect(libfnbuildpack.Metadata(path, libpak.ConfigurationResolver{})).To(Equal(map[string]interface{}{
+					"artifact": "test-artifact-1",
+					"handler":  "test-handler-1",
+				}))
+			})
+
+		})
+
+		context(`$RIFF_HANDLER="test-handler-2"`, func() {
 
 			it.Before(func() {
 				Expect(os.Setenv("RIFF_HANDLER", "test-handler-2")).To(Succeed())

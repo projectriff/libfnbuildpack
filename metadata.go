@@ -35,7 +35,7 @@ func IsRiff(path string, configurationResolver libpak.ConfigurationResolver) (bo
 		return true, nil
 	}
 
-	if _, ok := configurationResolver.Resolve("RIFF"); ok {
+	if s, _ := configurationResolver.Resolve("RIFF"); s != "" {
 		return true, nil
 	}
 
@@ -52,11 +52,11 @@ func Metadata(path string, configurationResolver libpak.ConfigurationResolver) (
 		return nil, fmt.Errorf("unable to decode %s\n%w", file, err)
 	}
 
-	if s, ok := configurationResolver.Resolve("RIFF_ARTIFACT"); ok {
+	if s, _ := configurationResolver.Resolve("RIFF_ARTIFACT"); s != "" {
 		metadata["artifact"] = s
 	}
 
-	if s, ok := configurationResolver.Resolve("RIFF_HANDLER"); ok {
+	if s, _ := configurationResolver.Resolve("RIFF_HANDLER"); s != "" {
 		metadata["handler"] = s
 	}
 
