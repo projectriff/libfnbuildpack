@@ -135,7 +135,6 @@ handler  = "test-handler-1"
 
 		})
 
-
 		context(`$RIFF_ARTIFACT="test-artifact-2"`, func() {
 
 			it.Before(func() {
