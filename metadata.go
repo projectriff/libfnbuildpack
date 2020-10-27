@@ -18,11 +18,12 @@ package libfnbuildpack
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/libpak"
+	"github.com/pelletier/go-toml"
 )
 
 // IsRiff determines if an application is explicitly a riff application.  This can be indicated by setting the $RIFF
@@ -48,7 +49,11 @@ func Metadata(path string, configurationResolver libpak.ConfigurationResolver) (
 	metadata := make(map[string]interface{})
 
 	file := filepath.Join(path, "riff.toml")
-	if _, err := toml.DecodeFile(file, &metadata); err != nil && !os.IsNotExist(err) {
+	b, err := ioutil.ReadFile(file)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("unable to read %s\n%w", file, err)
+	}
+	if err := toml.Unmarshal(b, &metadata); err != nil {
 		return nil, fmt.Errorf("unable to decode %s\n%w", file, err)
 	}
 
