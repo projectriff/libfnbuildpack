@@ -1,0 +1,5 @@
+path: ../../../projectriff/libfnbuildpack
+
+codeowners:
+- path:  "*"
+  owner: "@projectriff/riff-dev"
