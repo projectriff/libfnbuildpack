@@ -1,3 +1,5 @@
+github_token: ${{ secrets.RIFF_GITHUB_TOKEN }}
+
 codeowners:
 - path:  "*"
   owner: "@projectriff/riff-dev"
