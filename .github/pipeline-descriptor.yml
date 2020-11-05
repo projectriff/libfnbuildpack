@@ -1,4 +1,6 @@
-github_token: ${{ secrets.RIFF_GITHUB_TOKEN }}
+github:
+  username: ${{ secrets.RIFF_GITHUB_USERNAME }}
+  token:    ${{ secrets.RIFF_GITHUB_TOKEN }}
 
 codeowners:
 - path:  "*"
